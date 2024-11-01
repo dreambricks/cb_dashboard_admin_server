@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Imagens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        /* Estilos básicos para o carrossel */
+        .carousel-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 10px;
+            padding-bottom: 10px;
+        }
+        .carousel-item {
+            min-width: 100px;
+            max-width: 100px;
+            height: 100px;
+            background-color: #f3f3f3;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Estilos para a modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 80%;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .confirm-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+{% include 'header.html' %}
+
+<main class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-10 rounded-lg shadow-lg text-center" style="width: 45%;">
+
+        <h1 class="text-2xl font-bold mb-6 text-customBlue">Fotos ativas</h1>
+
+        <div class="carousel-container">
+            {% for image in active_images %}
+            <div class="carousel-item">
+                <img src="{{ url_for('static', filename='photos/' ~ image) }}" alt="Imagem ativa">
+            </div>
+            {% endfor %}
+        </div>
+
+        <h1 class="text-2xl font-bold mb-6 text-customBlue">Upload de Imagem</h1>
+        <form id="uploadForm" action="/upload_photo" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+            <input id="fileInput" type="file" name="files" multiple class="block w-full text-sm text-gray-500
+               file:mr-4 file:py-2 file:px-4
+               file:rounded-full file:border-0
+               file:text-sm file:font-semibold
+               file:bg-customBlue file:text-white
+               hover:file:bg-blue-700" required>
+
+            <button type="button" id="uploadButton" class="bg-customBlue text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700">
+                Enviar Imagens
+            </button>
+        </form>
+
+    </div>
+</main>
+
+<!-- Modal de Confirmação -->
+<div id="confirmationModal" class="modal">
+    <div class="modal-content">
+        <p>Tem certeza de que deseja fazer o upload dessas imagens?</p>
+        <div class="modal-buttons">
+            <button id="confirmUpload" class="confirm-btn">Sim</button>
+            <button id="cancelUpload" class="cancel-btn">Não</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Obtém os elementos da modal e do campo de upload
+    const modal = document.getElementById("confirmationModal");
+    const uploadButton = document.getElementById("uploadButton");
+    const confirmUpload = document.getElementById("confirmUpload");
+    const cancelUpload = document.getElementById("cancelUpload");
+    const uploadForm = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+
+    // Exibe a modal ao clicar no botão de upload se houver arquivos selecionados
+    uploadButton.addEventListener("click", () => {
+        if (fileInput.files.length > 0) {
+            modal.style.display = "flex";
+        } else {
+            alert("Por favor, selecione ao menos uma imagem para o upload.");
+        }
+    });
+
+    // Confirma o upload e submete o formulário
+    confirmUpload.addEventListener("click", () => {
+        modal.style.display = "none";
+        uploadForm.submit();
+    });
+
+    // Cancela o upload e fecha a modal
+    cancelUpload.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
+
+    // Fecha a modal se clicar fora do conteúdo da modal
+    window.addEventListener("click", (event) => {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    });
+</script>
+
+</body>
+</html>
