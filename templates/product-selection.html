@@ -13,8 +13,8 @@
 
     <div class="container mx-auto">
 
-        <input type="file" id="csvFile" accept=".csv"
-               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">
+<!--        <input type="file" id="csvFile" accept=".csv"-->
+<!--               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">-->
 
         <div class="grid grid-cols-3 gap-6">
             <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
@@ -52,7 +52,36 @@
     </div>
 
     <script>
-        // Armazena os dados da Tabela 1 com seus índices para manter a ordem original
+
+        function loadCSV(csvPath) {
+            console.log(csvPath)
+            fetch(csvPath)
+                .then(response => response.text())
+                .then(text => {
+                const data = parseCSV(text);
+                displayTable(data);
+
+                // Limpa as tabelas secundárias
+                document.getElementById("selectedTableHeader").innerHTML = "";
+                document.getElementById("selectedTableBody").innerHTML = "";
+                document.getElementById("confirmedTableHeader").innerHTML = "";
+                document.getElementById("confirmedTableBody").innerHTML = "";
+                document.getElementById("confirmedTable").style.display = "none";
+                document.getElementById("downloadButton").style.display = "none";
+            })
+                .catch(error => console.error('Erro ao carregar o CSV:', error));
+        }
+
+        // Executa a função para carregar o CSV ao iniciar a página
+        document.addEventListener("DOMContentLoaded", function() {
+            const csvPath = "{{ csv_path }}";  // Caminho do CSV passado pelo Flask
+            if (csvPath) {
+                loadCSV(csvPath);  // Carrega o CSV automaticamente se o caminho estiver definido
+            } else {
+                console.error("Caminho do CSV não fornecido.");
+            }
+        });
+
         let originalTableData = [];
 
         function parseCSV(text) {
@@ -200,10 +229,8 @@
                 rows.push(rowData.join(","));
             });
 
-            // Cria o conteúdo CSV com BOM UTF-8
             const csvContent = "\uFEFF" + rows.join("\n");
 
-            // Envia o CSV para o servidor
             fetch('/save_csv', {
                 method: 'POST',
                 headers: {
@@ -213,12 +240,8 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                // Verifica se a URL foi retornada e realiza o download
                 if (data.download_url) {
-                    const a = document.createElement("a");
-                    a.href = data.download_url;
-                    a.download = "produtos.csv";
-                    a.click();
+                    showModal("CSV salvo com sucesso!");
                 } else {
                     console.error('Erro ao obter a URL de download.');
                 }
@@ -226,25 +249,50 @@
                 .catch(error => console.error('Erro ao enviar o CSV:', error));
         });
 
-        document.getElementById("csvFile").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    const data = parseCSV(text);
-                    displayTable(data);
+        // Função para exibir uma modal
+        function showModal(message) {
+            // Cria o elemento da modal
+            const modal = document.createElement("div");
+            modal.className = "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50";
+            modal.innerHTML = `
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+            <h2 class="text-xl font-semibold mb-4">${message}</h2>
+            <button id="modalCloseButton" class="mt-4 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">
+                Fechar
+            </button>
+        </div>
+    `;
 
-                    document.getElementById("selectedTableHeader").innerHTML = "";
-                    document.getElementById("selectedTableBody").innerHTML = "";
-                    document.getElementById("confirmedTableHeader").innerHTML = "";
-                    document.getElementById("confirmedTableBody").innerHTML = "";
-                    document.getElementById("confirmedTable").style.display = "none";
-                    document.getElementById("downloadButton").style.display = "none";
-                };
-                reader.readAsText(file, "UTF-8");
-            }
-        });
+            // Adiciona a modal ao body
+            document.body.appendChild(modal);
+
+            // Adiciona evento para fechar a modal e recarregar a página
+            document.getElementById("modalCloseButton").addEventListener("click", () => {
+                modal.remove();
+                location.reload();
+            });
+        }
+
+
+        //        document.getElementById("csvFile").addEventListener("change", function(event) {
+        //            const file = event.target.files[0];
+        //            if (file) {
+        //                const reader = new FileReader();
+        //                reader.onload = function(e) {
+        //                    const text = e.target.result;
+        //                    const data = parseCSV(text);
+        //                    displayTable(data);
+        //
+        //                    document.getElementById("selectedTableHeader").innerHTML = "";
+        //                    document.getElementById("selectedTableBody").innerHTML = "";
+        //                    document.getElementById("confirmedTableHeader").innerHTML = "";
+        //                    document.getElementById("confirmedTableBody").innerHTML = "";
+        //                    document.getElementById("confirmedTable").style.display = "none";
+        //                    document.getElementById("downloadButton").style.display = "none";
+        //                };
+        //                reader.readAsText(file, "UTF-8");
+        //            }
+        //        });
     </script>
 
 </div>

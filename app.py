@@ -19,9 +19,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 PRODUCT_CSV_FOLDER = 'static/products_csv'
 app.config['PRODUCT_CSV_FOLDER'] = PRODUCT_CSV_FOLDER
 
+TWEET_CSV_FOLDER = 'static/tweets_csv'
+app.config['TWEET_CSV_FOLDER'] = TWEET_CSV_FOLDER
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PRODUCT_CSV_FOLDER, exist_ok=True)
-
+os.makedirs(TWEET_CSV_FOLDER, exist_ok=True)
 
 @app.route('/alive')
 def alive():
