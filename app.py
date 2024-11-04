@@ -7,6 +7,7 @@ from tweet_selection import tweet_selection_bp
 import os
 
 app = Flask(__name__)
+app.secret_key = 'dbsupersecretkey'
 
 app.register_blueprint(photo_bp)
 app.register_blueprint(product_selection_bp)
@@ -14,7 +15,12 @@ app.register_blueprint(tweet_selection_bp)
 
 UPLOAD_FOLDER = 'static/photos'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+PRODUCT_CSV_FOLDER = 'static/products_csv'
+app.config['PRODUCT_CSV_FOLDER'] = PRODUCT_CSV_FOLDER
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PRODUCT_CSV_FOLDER, exist_ok=True)
 
 
 @app.route('/alive')

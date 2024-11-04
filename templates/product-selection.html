@@ -1,19 +1,221 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carregar CSV com Tabelas Dinâmicas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <title>Admin Casas Bahia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
+{% include 'header.html' %}
+<div class="p-6 font-sans" style="font-family: 'Noto Sans', sans-serif;">
 
-    {% include 'header.html' %}
+    <div class="container mx-auto">
 
-    <main class="container mx-auto px-4 py-8">
-        <h2 class="text-2xl font-semibold text-[#0023bd]">Bem-vindo ao Site!</h2>
-        <p class="mt-4 text-gray-600">Explore as seções e veja o que temos a oferecer.</p>
-    </main>
+        <input type="file" id="csvFile" accept=".csv"
+               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">
 
+        <div class="grid grid-cols-3 gap-6">
+            <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
+                <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela Original</caption>
+            </table>
+
+            <div>
+                <table id="selectedTable" class="min-w-full bg-white border rounded-lg shadow-md">
+                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Itens Selecionados</caption>
+                    <thead>
+                    <tr id="selectedTableHeader" class="bg-gray-100 text-gray-700"></tr>
+                    </thead>
+                    <tbody id="selectedTableBody" class="divide-y divide-gray-200"></tbody>
+                </table>
+                <button id="confirmButton"
+                        class="mt-4 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Confirmar
+                </button>
+            </div>
+
+            <div>
+                <table id="confirmedTable" class="min-w-full bg-white border rounded-lg shadow-md"
+                       style="display: none;">
+                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Itens Confirmados</caption>
+                    <thead>
+                    <tr id="confirmedTableHeader" class="bg-gray-100 text-gray-700"></tr>
+                    </thead>
+                    <tbody id="confirmedTableBody" class="divide-y divide-gray-200"></tbody>
+                </table>
+                <button id="downloadButton"
+                        class="mt-4 bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600"
+                        style="display: none;">Download CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function parseCSV(text) {
+            const rows = text.split('\n');
+            return rows.map(row => row.split(','));
+        }
+
+        function displayTable(data) {
+            const table = document.getElementById("csvTable");
+            table.innerHTML = "";
+
+            data.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.className = index === 0 ? "bg-gray-100 font-semibold" : "hover:bg-gray-50";
+
+                if (index > 0) {
+                    const checkboxCell = document.createElement("td");
+                    checkboxCell.className = "px-4 py-2";
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.className = "rounded text-blue-500";
+                    checkbox.addEventListener("change", function() {
+                        handleCheckboxChange(checkbox, row);
+                    });
+                    checkboxCell.appendChild(checkbox);
+                    tr.appendChild(checkboxCell);
+                } else {
+                    const emptyCell = document.createElement("th");
+                    emptyCell.className = "px-4 py-2";
+                    tr.appendChild(emptyCell);
+
+                    const headerRow = document.getElementById("selectedTableHeader");
+                    row.forEach(cell => {
+                        const th = document.createElement("th");
+                        th.className = "px-4 py-2 text-left";
+                        th.textContent = cell;
+                        headerRow.appendChild(th);
+                    });
+                }
+
+                row.forEach(cell => {
+                    const cellElement = document.createElement(index === 0 ? "th" : "td");
+                    cellElement.className = "px-4 py-2";
+                    cellElement.textContent = cell;
+                    tr.appendChild(cellElement);
+                });
+                table.appendChild(tr);
+            });
+        }
+
+        function handleCheckboxChange(checkbox, rowData) {
+            if (checkbox.checked) {
+                addRowToSelectedTable(rowData);
+            } else {
+                removeRowFromSelectedTable(rowData);
+            }
+        }
+
+        function addRowToSelectedTable(rowData) {
+            const selectedTableBody = document.getElementById("selectedTableBody");
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50";
+            tr.dataset.rowData = JSON.stringify(rowData);
+
+            rowData.forEach(cell => {
+                const td = document.createElement("td");
+                td.className = "px-4 py-2";
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+
+            selectedTableBody.appendChild(tr);
+        }
+
+        function removeRowFromSelectedTable(rowData) {
+            const selectedTableBody = document.getElementById("selectedTableBody");
+            const rows = selectedTableBody.querySelectorAll("tr");
+            const rowDataStr = JSON.stringify(rowData);
+
+            rows.forEach(row => {
+                if (row.dataset.rowData === rowDataStr) {
+                    selectedTableBody.removeChild(row);
+                }
+            });
+        }
+
+        document.getElementById("confirmButton").addEventListener("click", function() {
+            const selectedRows = document.querySelectorAll("#selectedTableBody tr");
+            const confirmedTableBody = document.getElementById("confirmedTableBody");
+            const confirmedTableHeader = document.getElementById("confirmedTableHeader");
+
+            confirmedTableBody.innerHTML = "";
+
+            if (confirmedTableHeader.childElementCount === 0) {
+                const selectedHeader = document.querySelectorAll("#selectedTableHeader th");
+                selectedHeader.forEach(th => {
+                    const newTh = document.createElement("th");
+                    newTh.className = "px-4 py-2 text-left";
+                    newTh.textContent = th.textContent;
+                    confirmedTableHeader.appendChild(newTh);
+                });
+            }
+
+            selectedRows.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+                row.querySelectorAll("td").forEach(td => {
+                    const newTd = document.createElement("td");
+                    newTd.className = "px-4 py-2";
+                    newTd.textContent = td.textContent;
+                    tr.appendChild(newTd);
+                });
+                confirmedTableBody.appendChild(tr);
+            });
+
+            document.getElementById("confirmedTable").style.display = "table";
+            document.getElementById("downloadButton").style.display = "inline-block";
+        });
+
+        document.getElementById("downloadButton").addEventListener("click", function() {
+            const rows = [];
+            rows.push("nomes");
+
+            const headerCells = document.querySelectorAll("#confirmedTableHeader th");
+            const headerRow = Array.from(headerCells).map(cell => cell.textContent);
+            if (headerRow.length > 0) {
+                rows.push(headerRow.join(","));
+            }
+
+            const bodyRows = document.querySelectorAll("#confirmedTableBody tr");
+            bodyRows.forEach(row => {
+                const rowData = Array.from(row.querySelectorAll("td")).map(cell => cell.textContent);
+                rows.push(rowData.join(","));
+            });
+
+            const csvContent = "\uFEFF" + rows.join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "itens_confirmados.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById("csvFile").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const data = parseCSV(text);
+                    displayTable(data);
+
+                    document.getElementById("selectedTableHeader").innerHTML = "";
+                    document.getElementById("selectedTableBody").innerHTML = "";
+                    document.getElementById("confirmedTableHeader").innerHTML = "";
+                    document.getElementById("confirmedTableBody").innerHTML = "";
+                    document.getElementById("confirmedTable").style.display = "none";
+                    document.getElementById("downloadButton").style.display = "none";
+                };
+                reader.readAsText(file, "UTF-8");
+            }
+        });
+    </script>
+
+</div>
 </body>
 </html>
