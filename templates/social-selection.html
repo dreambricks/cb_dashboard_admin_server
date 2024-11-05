@@ -13,12 +13,12 @@
 
     <div class="container mx-auto">
 
-<!--        <input type="file" id="csvFile" accept=".csv"-->
-<!--               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">-->
+        <!--        <input type="file" id="csvFile" accept=".csv"-->
+        <!--               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">-->
 
         <div class="grid grid-cols-3 gap-6">
             <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
-                <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Tweets</caption>
+                <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Comentários</caption>
             </table>
 
             <div>
@@ -216,7 +216,7 @@
 
         document.getElementById("downloadButton").addEventListener("click", function() {
             const rows = [];
-            rows.push("tweets");
+            rows.push("social");
 
             const headerCells = document.querySelectorAll("#confirmedTableHeader th");
             const headerRow = Array.from(headerCells).map(cell => cell.textContent);
@@ -232,7 +232,7 @@
 
             const csvContent = "\uFEFF" + rows.join("\n");
 
-            fetch('/save_tweets_csv', {
+            fetch('/save_social_csv', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -274,25 +274,25 @@
             });
         }
 
-//        document.getElementById("csvFile").addEventListener("change", function(event) {
-//            const file = event.target.files[0];
-//            if (file) {
-//                const reader = new FileReader();
-//                reader.onload = function(e) {
-//                    const text = e.target.result;
-//                    const data = parseCSV(text);
-//                    displayTable(data);
-//
-//                    document.getElementById("selectedTableHeader").innerHTML = "";
-//                    document.getElementById("selectedTableBody").innerHTML = "";
-//                    document.getElementById("confirmedTableHeader").innerHTML = "";
-//                    document.getElementById("confirmedTableBody").innerHTML = "";
-//                    document.getElementById("confirmedTable").style.display = "none";
-//                    document.getElementById("downloadButton").style.display = "none";
-//                };
-//                reader.readAsText(file, "UTF-8");
-//            }
-//        });
+        //        document.getElementById("csvFile").addEventListener("change", function(event) {
+        //            const file = event.target.files[0];
+        //            if (file) {
+        //                const reader = new FileReader();
+        //                reader.onload = function(e) {
+        //                    const text = e.target.result;
+        //                    const data = parseCSV(text);
+        //                    displayTable(data);
+        //
+        //                    document.getElementById("selectedTableHeader").innerHTML = "";
+        //                    document.getElementById("selectedTableBody").innerHTML = "";
+        //                    document.getElementById("confirmedTableHeader").innerHTML = "";
+        //                    document.getElementById("confirmedTableBody").innerHTML = "";
+        //                    document.getElementById("confirmedTable").style.display = "none";
+        //                    document.getElementById("downloadButton").style.display = "none";
+        //                };
+        //                reader.readAsText(file, "UTF-8");
+        //            }
+        //        });
     </script>
 
 </div>

@@ -13,17 +13,14 @@
 
     <div class="container mx-auto">
 
-<!--        <input type="file" id="csvFile" accept=".csv"-->
-<!--               class="block text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer mb-4">-->
-
         <div class="grid grid-cols-3 gap-6">
             <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
-                <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Produtos</caption>
+                <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Palavras</caption>
             </table>
 
             <div>
                 <table id="selectedTable" class="min-w-full bg-white border rounded-lg shadow-md">
-                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Itens Selecionados</caption>
+                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Palavras Selecionadas</caption>
                     <thead>
                     <tr id="selectedTableHeader" class="bg-gray-100 text-gray-700"></tr>
                     </thead>
@@ -37,7 +34,7 @@
             <div>
                 <table id="confirmedTable" class="min-w-full bg-white border rounded-lg shadow-md"
                        style="display: none;">
-                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Itens Confirmados</caption>
+                    <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Palavras Confirmadas</caption>
                     <thead>
                     <tr id="confirmedTableHeader" class="bg-gray-100 text-gray-700"></tr>
                     </thead>
@@ -215,7 +212,7 @@
 
         document.getElementById("downloadButton").addEventListener("click", function() {
             const rows = [];
-            rows.push("produtos");
+            rows.push("palavras");
 
             const headerCells = document.querySelectorAll("#confirmedTableHeader th");
             const headerRow = Array.from(headerCells).map(cell => cell.textContent);
@@ -251,7 +248,6 @@
 
         // Função para exibir uma modal
         function showModal(message) {
-            // Cria o elemento da modal
             const modal = document.createElement("div");
             modal.className = "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50";
             modal.innerHTML = `
@@ -263,36 +259,13 @@
         </div>
     `;
 
-            // Adiciona a modal ao body
             document.body.appendChild(modal);
 
-            // Adiciona evento para fechar a modal e recarregar a página
             document.getElementById("modalCloseButton").addEventListener("click", () => {
                 modal.remove();
                 location.reload();
             });
         }
-
-
-        //        document.getElementById("csvFile").addEventListener("change", function(event) {
-        //            const file = event.target.files[0];
-        //            if (file) {
-        //                const reader = new FileReader();
-        //                reader.onload = function(e) {
-        //                    const text = e.target.result;
-        //                    const data = parseCSV(text);
-        //                    displayTable(data);
-        //
-        //                    document.getElementById("selectedTableHeader").innerHTML = "";
-        //                    document.getElementById("selectedTableBody").innerHTML = "";
-        //                    document.getElementById("confirmedTableHeader").innerHTML = "";
-        //                    document.getElementById("confirmedTableBody").innerHTML = "";
-        //                    document.getElementById("confirmedTable").style.display = "none";
-        //                    document.getElementById("downloadButton").style.display = "none";
-        //                };
-        //                reader.readAsText(file, "UTF-8");
-        //            }
-        //        });
     </script>
 
 </div>
