@@ -22,6 +22,15 @@ os.makedirs(app.config['SOCIAL_CSV_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['WORD_CSV_FOLDER_OUT'], exist_ok=True)
 os.makedirs(app.config['SOCIAL_CSV_FOLDER_OUT'], exist_ok=True)
 
+os.makedirs(app.config['X_CSV_FOLDER_IN'], exist_ok=True)
+os.makedirs(app.config['TIKTOK_CSV_FOLDER_IN'], exist_ok=True)
+os.makedirs(app.config['INSTAGRAM_CSV_FOLDER_IN'], exist_ok=True)
+
+os.makedirs(app.config['X_CSV_FOLDER_OUT'], exist_ok=True)
+os.makedirs(app.config['TIKTOK_CSV_FOLDER_OUT'], exist_ok=True)
+os.makedirs(app.config['INSTAGRAM_CSV_FOLDER_OUT'], exist_ok=True)
+
+
 @app.route('/alive')
 def alive():
     return 'alive'
