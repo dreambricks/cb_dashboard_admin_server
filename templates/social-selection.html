@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carregar CSV com Tabelas Dinâmicas</title>
+    <title>Tabela de posts</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
 </head>
@@ -17,14 +17,14 @@
         <div class="mb-4">
             <label for="platformSelect" class="block text-gray-700 font-semibold mb-2">Selecione a plataforma:</label>
             <select id="platformSelect" class="border border-gray-300 rounded-lg p-2">
-                <option value="{{ x_csv_folder_in }}">X</option>
-                <option value="{{ tiktok_csv_folder_in }}">TikTok</option>
-                <option value="{{ instagram_csv_folder_in }}">Instagram</option>
+                <option value="{{ x_tsv_folder_in }}">X</option>
+                <option value="{{ tiktok_tsv_folder_in }}">TikTok</option>
+                <option value="{{ instagram_tsv_folder_in }}">Instagram</option>
             </select>
         </div>
 
         <div class="grid grid-cols-3 gap-6">
-            <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
+            <table id="tsvTable" class="min-w-full bg-white border rounded-lg shadow-md">
                 <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Comentários</caption>
             </table>
 
@@ -59,12 +59,12 @@
     </div>
 
     <script>
-        function loadCSV(csvPath) {
-            console.log(csvPath)
-            fetch(csvPath)
+        function loadTSV(tsvPath) {
+            console.log(tsvPath)
+            fetch(tsvPath)
                 .then(response => response.text())
                 .then(text => {
-                const data = parseCSV(text);
+                const data = parseTSV(text);
                 displayTable(data);
 
                 // Limpa as tabelas e variáveis de itens selecionados e confirmados
@@ -77,30 +77,30 @@
                 document.getElementById("confirmedTable").style.display = "none";
                 document.getElementById("downloadButton").style.display = "none";
             })
-                .catch(error => console.error('Erro ao carregar o CSV:', error));
+                .catch(error => console.error('Erro ao carregar o TSV:', error));
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            const csvSource = document.getElementById("platformSelect");
-            console.log(csvSource);
+            const tsvSource = document.getElementById("platformSelect");
+            console.log(tsvSource);
 
-            loadCSV(csvSource.value);
+            loadTSV(tsvSource.value);
 
-            csvSource.addEventListener("change", function() {
-                loadCSV(csvSource.value);
+            tsvSource.addEventListener("change", function() {
+                loadTSV(tsvSource.value);
             });
         });
 
         let originalTableData = [];
 
-        function parseCSV(text) {
-            const rows = text.split('\n').map(row => row.split(','));
+        function parseTSV(text) {
+            const rows = text.split('\n').map(row => row.split('\t'));
             originalTableData = rows.slice(1).map((row, index) => ({ index, row })); // Ignora o cabeçalho
             return rows;
         }
 
         function displayTable(data) {
-            const table = document.getElementById("csvTable");
+            const table = document.getElementById("tsvTable");
             table.innerHTML = "";
 
             data.forEach((row, index) => {
@@ -228,38 +228,37 @@
             const headerCells = document.querySelectorAll("#confirmedTableHeader th");
             const headerRow = Array.from(headerCells).map(cell => cell.textContent);
             if (headerRow.length > 0) {
-                rows.push(headerRow.join(","));
+                rows.push(headerRow.join("\t"));
             }
 
             const bodyRows = document.querySelectorAll("#confirmedTableBody tr");
             bodyRows.forEach(row => {
                 const rowData = Array.from(row.querySelectorAll("td")).map(cell => cell.textContent);
-                rows.push(rowData.join(","));
+                rows.push(rowData.join("\t"));
             });
 
-            const csvContent = "\uFEFF" + rows.join("\n");
+            const tsvContent = "\uFEFF" + rows.join("\n");
 
             // Obtém o texto da opção selecionada no dropdown
             const platformSelect = document.getElementById("platformSelect");
             const platform = platformSelect.options[platformSelect.selectedIndex].text.toLowerCase();
 
-            fetch(`/save_social_csv/${platform}`, {
+            fetch(`/save_social_tsv/${platform}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ csv: csvContent })
+                body: JSON.stringify({ tsv: tsvContent })
             })
                 .then(response => response.json())
                 .then(data => {
                 if (data.download_url) {
-                    showModal("CSV salvo com sucesso!");
-                    //                    window.location.href = data.download_url;
+                    showModal("TSV salvo com sucesso!");
                 } else {
                     console.error('Erro ao obter a URL de download.');
                 }
             })
-                .catch(error => console.error('Erro ao enviar o CSV:', error));
+                .catch(error => console.error('Erro ao enviar o TSV:', error));
         });
 
         // Função para exibir uma modal

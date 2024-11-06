@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carregar CSV com Tabelas Dinâmicas</title>
+    <title>Carregar TSV com Tabelas Dinâmicas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
 </head>
@@ -14,7 +14,7 @@
     <div class="container mx-auto">
 
         <div class="grid grid-cols-3 gap-6">
-            <table id="csvTable" class="min-w-full bg-white border rounded-lg shadow-md">
+            <table id="tsvTable" class="min-w-full bg-white border rounded-lg shadow-md">
                 <caption class="bg-gray-200 text-lg font-semibold p-3 border-b">Tabela de Palavras</caption>
             </table>
 
@@ -50,12 +50,12 @@
 
     <script>
 
-        function loadCSV(csvPath) {
-            console.log(csvPath)
-            fetch(csvPath)
+        function loadTSV(tsvPath) {
+            console.log(tsvPath)
+            fetch(tsvPath)
                 .then(response => response.text())
                 .then(text => {
-                const data = parseCSV(text);
+                const data = parseTSV(text);
                 displayTable(data);
 
                 // Limpa as tabelas secundárias
@@ -66,29 +66,29 @@
                 document.getElementById("confirmedTable").style.display = "none";
                 document.getElementById("downloadButton").style.display = "none";
             })
-                .catch(error => console.error('Erro ao carregar o CSV:', error));
+                .catch(error => console.error('Erro ao carregar o TSV:', error));
         }
 
-        // Executa a função para carregar o CSV ao iniciar a página
+        // Executa a função para carregar o TSV ao iniciar a página
         document.addEventListener("DOMContentLoaded", function() {
-            const csvPath = "{{ csv_path }}";  // Caminho do CSV passado pelo Flask
-            if (csvPath) {
-                loadCSV(csvPath);  // Carrega o CSV automaticamente se o caminho estiver definido
+            const tsvPath = "{{ tsv_path }}";  // Caminho do TSV passado pelo Flask
+            if (tsvPath) {
+                loadTSV(tsvPath);  // Carrega o TSV automaticamente se o caminho estiver definido
             } else {
-                console.error("Caminho do CSV não fornecido.");
+                console.error("Caminho do TSV não fornecido.");
             }
         });
 
         let originalTableData = [];
 
-        function parseCSV(text) {
-            const rows = text.split('\n').map(row => row.split(','));
+        function parseTSV(text) {
+            const rows = text.split('\n').map(row => row.split('\t'));
             originalTableData = rows.slice(1).map((row, index) => ({ index, row })); // Ignora o cabeçalho
             return rows;
         }
 
         function displayTable(data) {
-            const table = document.getElementById("csvTable");
+            const table = document.getElementById("tsvTable");
             table.innerHTML = "";
 
             data.forEach((row, index) => {
@@ -217,33 +217,33 @@
             const headerCells = document.querySelectorAll("#confirmedTableHeader th");
             const headerRow = Array.from(headerCells).map(cell => cell.textContent);
             if (headerRow.length > 0) {
-                rows.push(headerRow.join(","));
+                rows.push(headerRow.join("\t"));
             }
 
             const bodyRows = document.querySelectorAll("#confirmedTableBody tr");
             bodyRows.forEach(row => {
                 const rowData = Array.from(row.querySelectorAll("td")).map(cell => cell.textContent);
-                rows.push(rowData.join(","));
+                rows.push(rowData.join("\t"));
             });
 
-            const csvContent = "\uFEFF" + rows.join("\n");
+            const tsvContent = "\uFEFF" + rows.join("\n");
 
-            fetch('/save_csv', {
+            fetch('/save_tsv', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ csv: csvContent })
+                body: JSON.stringify({ tsv: tsvContent })
             })
                 .then(response => response.json())
                 .then(data => {
                 if (data.download_url) {
-                    showModal("CSV salvo com sucesso!");
+                    showModal("TSV salvo com sucesso!");
                 } else {
                     console.error('Erro ao obter a URL de download.');
                 }
             })
-                .catch(error => console.error('Erro ao enviar o CSV:', error));
+                .catch(error => console.error('Erro ao enviar o TSV:', error));
         });
 
         // Função para exibir uma modal
