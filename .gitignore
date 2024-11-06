@@ -168,8 +168,10 @@ static/social_csv_out
 
 static/social
 
+static/map_tsv_in
+
+static/map_tsv_out
+
 produtos.csv
 
 tweets.csv
-
-

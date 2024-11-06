@@ -11,3 +11,7 @@ INSTAGRAM_TSV_FOLDER_IN = 'static/social/instagram_csv_in'
 X_TSV_FOLDER_OUT = 'static/social/x_csv_out'
 TIKTOK_TSV_FOLDER_OUT = 'static/social/tiktok_csv_out'
 INSTAGRAM_TSV_FOLDER_OUT ='static/social/instagram_csv_out'
+
+MAP_TSV_FOLDER_IN = 'static/map_tsv_in'
+MAP_TSV_FOLDER_OUT = 'static/map_tsv_out'
+MAP_EDITED = False

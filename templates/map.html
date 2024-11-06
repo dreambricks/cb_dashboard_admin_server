@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa com Salvamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+{% include 'header.html' %}
+<div class="p-6 font-sans" style="font-family: 'Noto Sans', sans-serif;">
+    <div id="tsv-container" class="w-4/5 mx-auto mt-4" data-tsv-path="{{ tsv_file }}">
+        <div class="flex space-x-4">
+            <button id="save-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Salvar
+                Tabela
+            </button>
+            <label class="flex items-center mt-4">
+                <span class="mr-2">Editar Mapa</span>
+                <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" id="toggle-map-edited"
+                           class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
+                           {% if map_edited %}checked{% endif %}>
+                    <label for="toggle-map-edited"
+                           class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                </div>
+            </label>
+        </div>
+        <table id="editable-table" class="mt-4 w-full table-auto border-collapse">
+            <thead>
+            <tr>
+                <th class="border px-4 py-2">Estado</th>
+                <th class="border px-4 py-2">Produto</th>
+            </tr>
+            </thead>
+            <tbody id="table-body">
+            <!-- Conteúdo gerado por JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('tsv-container');
+        const tsvPath = container.dataset.tsvPath;
+
+        // Função para buscar o arquivo TSV e carregar na tabela
+        fetch(tsvPath)
+            .then(response => response.text())
+            .then(data => {
+            const lines = data.split('\n');
+            const tableBody = document.getElementById('table-body');
+
+            lines.forEach((line, index) => {
+                if (line.trim() !== '') {
+                    const [fixedColumn, editableColumn] = line.split('\t');
+                    const row = document.createElement('tr');
+
+                    // Coluna fixa
+                    const fixedCell = document.createElement('td');
+                    fixedCell.textContent = fixedColumn;
+                    fixedCell.classList.add('border', 'px-4', 'py-2', 'bg-gray-200');
+                    row.appendChild(fixedCell);
+
+                    // Coluna editável
+                    const editableCell = document.createElement('td');
+                    editableCell.contentEditable = true;
+                    editableCell.textContent = editableColumn || '';
+                    editableCell.classList.add('border', 'px-4', 'py-2', 'bg-white');
+                    row.appendChild(editableCell);
+
+                    tableBody.appendChild(row);
+                }
+            });
+        })
+            .catch(error => console.error('Erro ao carregar o arquivo TSV:', error));
+
+        // Função para salvar a tabela
+        document.getElementById('save-button').addEventListener('click', () => {
+            const tableRows = document.querySelectorAll('#editable-table tbody tr');
+            const tableData = [];
+
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = Array.from(cells).map(cell => cell.textContent.trim());
+                tableData.push(rowData);
+            });
+
+            fetch('/save_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ table: tableData })
+            })
+                .then(response => response.json())
+                .then(data => {
+                if (data.message) {
+                    alert('Tabela salva com sucesso!');
+                } else {
+                    alert('Erro ao salvar a tabela: ' + data.error);
+                }
+            })
+                .catch(error => {
+                console.error('Erro ao enviar os dados:', error);
+                alert('Erro ao enviar os dados.');
+            });
+        });
+
+        // Função para controlar MAP_EDITED
+        document.getElementById('toggle-map-edited').addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+            fetch('/toggle_map_edited', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mapEdited: isChecked })
+            })
+                .then(response => response.json())
+                .then(data => {
+                if (data.message) {
+                    console.log('MAP_EDITED atualizado com sucesso!');
+                } else {
+                    console.error('Erro ao atualizar MAP_EDITED: ' + data.error);
+                }
+            })
+                .catch(error => {
+                console.error('Erro ao enviar a solicitação:', error);
+            });
+        });
+    });
+</script>
+</body>
+</html>
