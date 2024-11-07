@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify, send_from_directory
 import os
 import config
 
@@ -32,7 +32,7 @@ def salvar_tabela():
         if not data or 'table' not in data:
             return jsonify({'error': 'Dados da tabela ausentes'}), 400
 
-        output_path = os.path.join(current_app.config['MAP_TSV_FOLDER_OUT'], 'map_tsv_out.tsv')
+        output_path = os.path.join(current_app.config['MAP_TSV_FOLDER_EDITED'], 'map_tsv_edited.tsv')
 
         with open(output_path, 'w', encoding='utf-8') as file:
             for row in data['table']:
@@ -50,14 +50,12 @@ def toggle_map_edited():
     if 'mapEdited' in data:
         new_value = data['mapEdited']
 
-        # Ler o conteúdo atual de config.py
         try:
             with open('config.py', 'r') as file:
                 config_content = file.readlines()
         except FileNotFoundError:
             return jsonify({'error': 'Arquivo config.py não encontrado'}), 500
 
-        # Procurar e atualizar a linha com a variável MAP_EDITED
         updated = False
         for i, line in enumerate(config_content):
             if line.startswith('MAP_EDITED'):
@@ -65,11 +63,9 @@ def toggle_map_edited():
                 updated = True
                 break
 
-        # Se a variável não foi encontrada, adicioná-la ao final
         if not updated:
             config_content.append(f'MAP_EDITED = {new_value}\n')
 
-        # Escrever as mudanças de volta em config.py
         try:
             with open('config.py', 'w') as file:
                 file.writelines(config_content)
@@ -78,3 +74,25 @@ def toggle_map_edited():
 
         return jsonify({'message': 'MAP_EDITED atualizado com sucesso!'})
     return jsonify({'error': 'Dados inválidos'}), 400
+
+
+@map_bp.route('/download_map_link')
+def download_map_link():
+    if config.MAP_EDITED:
+        filename = 'map_tsv_in.tsv'
+    else:
+        filename = 'map_tsv_edited.tsv'
+
+    download_url = url_for('map.download_file', filename=filename, _external=True)
+
+    return jsonify({"download_url": download_url})
+
+
+@map_bp.route('/download/<filename>')
+def download_file(filename):
+    if config.MAP_EDITED:
+        folder_path = config.MAP_TSV_FOLDER_IN
+    else:
+        folder_path = config.MAP_TSV_FOLDER_EDITED
+
+    return send_from_directory(directory=folder_path, path=filename, as_attachment=True)

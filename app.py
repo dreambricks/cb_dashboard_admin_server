@@ -33,7 +33,7 @@ os.makedirs(app.config['TIKTOK_TSV_FOLDER_OUT'], exist_ok=True)
 os.makedirs(app.config['INSTAGRAM_TSV_FOLDER_OUT'], exist_ok=True)
 
 os.makedirs(app.config['MAP_TSV_FOLDER_IN'], exist_ok=True)
-os.makedirs(app.config['MAP_TSV_FOLDER_OUT'], exist_ok=True)
+os.makedirs(app.config['MAP_TSV_FOLDER_EDITED'], exist_ok=True)
 
 
 @app.route('/alive')
