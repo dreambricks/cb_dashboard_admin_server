@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify, send_from_directory
+from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify, send_from_directory, \
+    abort, Response
 import os
 import config
 
@@ -88,11 +89,35 @@ def download_map_link():
     return jsonify({"download_url": download_url})
 
 
-@map_bp.route('/download/<filename>')
+@map_bp.route('/download_map/<filename>')
 def download_file(filename):
     if config.MAP_EDITED:
-        folder_path = config.MAP_TSV_FOLDER_IN
-    else:
         folder_path = config.MAP_TSV_FOLDER_EDITED
+    else:
+        folder_path = config.MAP_TSV_FOLDER_IN
 
     return send_from_directory(directory=folder_path, path=filename, as_attachment=True)
+
+@map_bp.route('/get-map-tsv', methods=['GET'])
+def get_first_tsv_file():
+    if config.MAP_EDITED:
+        folder_path = config.MAP_TSV_FOLDER_EDITED
+    else:
+        folder_path = config.MAP_TSV_FOLDER_IN
+
+    if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+        print(folder_path)
+        abort(404, description="Pasta não encontrada ou caminho inválido.")
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.tsv'):
+            file_path = os.path.join(folder_path, filename)
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+
+            response = Response(content, content_type='text/plain')
+
+            return response
+
+    abort(404, description="Nenhum arquivo .tsv encontrado na pasta.")

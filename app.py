@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, abort, jsonify, Response
 
 import config
 from map import map_bp
@@ -39,7 +39,7 @@ os.makedirs(app.config['MAP_TSV_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['MAP_TSV_FOLDER_EDITED'], exist_ok=True)
 
 os.makedirs(app.config['TOP_PRODUCTS_FOLDER_IN'], exist_ok=True)
-os.makedirs(app.config['TOP_PRODUCTS_FOLDER_OUT'], exist_ok=True)
+os.makedirs(app.config['TOP_PRODUCTS_FOLDER_EDITED'], exist_ok=True)
 
 @app.route('/alive')
 def alive():
@@ -48,6 +48,28 @@ def alive():
 @app.route('/')
 def index():
     return redirect(url_for('photo.upload_image'))
+
+
+@app.route('/get-tsv/<config_path>', methods=['GET'])
+def get_first_tsv_file(config_path):
+    folder_path =  app.config[f'{config_path}']
+
+    if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+        print(folder_path)
+        abort(404, description="Pasta não encontrada ou caminho inválido.")
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.tsv'):
+            file_path = os.path.join(folder_path, filename)
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+
+            response = Response(content, content_type='text/plain')
+
+            return response
+
+    abort(404, description="Nenhum arquivo .tsv encontrado na pasta.")
 
 
 if __name__ == "__main__":

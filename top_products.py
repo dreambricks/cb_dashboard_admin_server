@@ -1,4 +1,5 @@
-from flask import Blueprint, current_app, render_template, request, jsonify
+from flask import Blueprint, current_app, render_template, request, jsonify, url_for, send_from_directory, abort, \
+    Response
 import os
 
 import config
@@ -25,11 +26,11 @@ def index():
     return render_template('top-products.html', tsv_path=new_path, product_edited=config.PRODUCT_EDITED)
 
 
-@top_products_bp.route('/save-edited-table', methods=['POST'])
-def save_edited_table():
+@top_products_bp.route('/save-edited-top-products', methods=['POST'])
+def save_edited_products():
     data = request.json.get('data')
     if data:
-        output_path = os.path.join(current_app.config['TOP_PRODUCTS_FOLDER_OUT'], 'edited_table.tsv')
+        output_path = os.path.join(current_app.config['TOP_PRODUCTS_FOLDER_EDITED'], 'top_product_edited.tsv')
         try:
             with open(output_path, 'w', encoding='utf-8') as file:
                 file.write(data)
@@ -69,3 +70,55 @@ def toggle_map_edited():
 
         return jsonify({'message': 'PRODUCT_EDITED atualizado com sucesso!'})
     return jsonify({'error': 'Dados inválidos'}), 400
+
+
+@top_products_bp.route('/download_top_products_link')
+def download_map_link():
+    if config.PRODUCT_EDITED:
+        filename = 'top_product_edited.tsv'
+    else:
+        filename = 'top_products.tsv'
+
+    download_url = url_for('top_products.download_file', filename=filename, _external=True)
+
+    return jsonify({"download_url": download_url})
+
+
+@top_products_bp.route('/download_top_products/<filename>')
+def download_file(filename):
+    if config.PRODUCT_EDITED:
+        folder_path = config.TOP_PRODUCTS_FOLDER_EDITED
+    else:
+        folder_path = config.TOP_PRODUCTS_FOLDER_IN
+    print(folder_path)
+
+    return send_from_directory(directory=folder_path, path=filename, as_attachment=True)
+
+
+@top_products_bp.route('/get-top-product-tsv', methods=['GET'])
+def get_first_tsv_file():
+
+    if config.PRODUCT_EDITED:
+        folder_path = config.TOP_PRODUCTS_FOLDER_EDITED
+    else:
+        folder_path = config.TOP_PRODUCTS_FOLDER_IN
+
+    if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+        print(folder_path)
+        abort(404, description="Pasta não encontrada ou caminho inválido.")
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.tsv'):
+            file_path = os.path.join(folder_path, filename)
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+
+            response = Response(content, content_type='text/plain')
+
+            return response
+
+    abort(404, description="Nenhum arquivo .tsv encontrado na pasta.")
+
+
+

@@ -16,8 +16,8 @@ INSTAGRAM_TSV_FOLDER_OUT ='static/social/instagram_tsv_out'
 
 MAP_TSV_FOLDER_IN = 'static/map_tsv_in'
 MAP_TSV_FOLDER_EDITED = 'static/map_tsv_edited'
-MAP_EDITED = False
+MAP_EDITED = True
 
 TOP_PRODUCTS_FOLDER_IN = 'static/top_products_tsv_in'
-TOP_PRODUCTS_FOLDER_OUT = 'static/top_products_tsv_out'
+TOP_PRODUCTS_FOLDER_EDITED = 'static/top_products_tsv_edited'
 PRODUCT_EDITED = False
