@@ -11,6 +11,7 @@
 {% include 'header.html' %}
 <div class="p-6 font-sans" style="font-family: 'Noto Sans', sans-serif;">
     <div id="tsv-container" class="w-4/5 mx-auto mt-4" data-tsv-path="{{ tsv_file }}">
+
         <div class="flex space-x-4">
             <button id="save-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Salvar
                 Tabela
@@ -26,6 +27,7 @@
                 </div>
             </label>
         </div>
+
         <table id="editable-table" class="mt-4 w-full table-auto border-collapse">
             <thead>
             <tr>
@@ -107,7 +109,7 @@
             });
         });
 
-        // Função para controlar MAP_EDITED
+
         document.getElementById('toggle-map-edited').addEventListener('change', (event) => {
             const isChecked = event.target.checked;
             fetch('/toggle_map_edited', {

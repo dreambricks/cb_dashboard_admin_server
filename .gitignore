@@ -158,9 +158,9 @@ cython_debug/
 
 static/photos
 
-static/words_csv_in
+static/words_tsv_in
 
-static/words_csv_out
+static/words_tsv_out
 
 static/social_csv_in
 
@@ -173,6 +173,11 @@ static/map_tsv_in
 static/map_tsv_out
 
 static/map_tsv_edited
+
+static/top_products_tsv_in
+
+static/top_products_tsv_out
+
 
 produtos.csv
 
