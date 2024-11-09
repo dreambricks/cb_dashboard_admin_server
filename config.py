@@ -21,3 +21,5 @@ MAP_EDITED = True
 TOP_PRODUCTS_FOLDER_IN = 'static/top_products_tsv_in'
 TOP_PRODUCTS_FOLDER_EDITED = 'static/top_products_tsv_edited'
 PRODUCT_EDITED = False
+
+PHRASE = "uuutyrtretwemmmmm"
