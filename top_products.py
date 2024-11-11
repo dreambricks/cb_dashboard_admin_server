@@ -1,8 +1,8 @@
 from flask import Blueprint, current_app, render_template, request, jsonify, url_for, send_from_directory, abort, \
     Response
 import os
-
 import config
+import shutil
 
 top_products_bp = Blueprint('top_products', __name__)
 
@@ -10,20 +10,42 @@ top_products_bp = Blueprint('top_products', __name__)
 @top_products_bp.route('/top-products')
 def index():
     folder_path = current_app.config['TOP_PRODUCTS_FOLDER_IN']
-    tsv_filename = None
+    folder_path_edited = current_app.config.get('TOP_PRODUCTS_FOLDER_EDITED')
 
-    for file in os.listdir(folder_path):
-        if file.endswith('.tsv'):
-            tsv_filename = file
-            break
+    def get_tsv_path(folder):
+        for file in os.listdir(folder):
+            if file.endswith('.tsv'):
+                return os.path.join(folder, file).replace("\\", "/")
+        return None
 
-    if tsv_filename is None:
-        return "No TSV file found in the directory.", 404
+    tsv_path = get_tsv_path(folder_path)
+    tsv_path_edited = get_tsv_path(folder_path_edited)
 
-    tsv_path = os.path.join(folder_path, tsv_filename)
-    new_path = tsv_path.replace("\\", "/")
-    print(new_path)
-    return render_template('top-products.html', tsv_path=new_path, product_edited=config.PRODUCT_EDITED)
+    if not tsv_path:
+        return "No TSV file found in the input directory.", 404
+
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    product_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('PRODUCT_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                product_edited = value.lower() == 'true'
+                break
+
+    if product_edited is None:
+        return "PRODUCT_EDITED not found in config.py", 500
+
+    print(f"Original TSV Path: {tsv_path}")
+    if tsv_path_edited:
+        print(f"Edited TSV Path: {tsv_path_edited}")
+
+    return render_template(
+        'top-products.html',
+        tsv_path=tsv_path,
+        tsv_file_edited=tsv_path_edited,
+        product_edited=product_edited
+    )
 
 
 @top_products_bp.route('/save-edited-top-products', methods=['POST'])
@@ -119,6 +141,25 @@ def get_first_tsv_file():
             return response
 
     abort(404, description="Nenhum arquivo .tsv encontrado na pasta.")
+
+
+@top_products_bp.route('/reset_top_products_table', methods=['POST'])
+def reset_table():
+    try:
+        source_folder = config.TOP_PRODUCTS_FOLDER_IN
+        target_file = os.path.join(config.TOP_PRODUCTS_FOLDER_EDITED, 'top_product_edited.tsv')
+
+        source_file = next((f for f in os.listdir(source_folder) if f.endswith('.tsv')), None)
+        if source_file is None:
+            return jsonify({"error": "Nenhum arquivo TSV encontrado na pasta de origem."}), 404
+
+        source_file_path = os.path.join(source_folder, source_file)
+
+        shutil.copy(source_file_path, target_file)
+
+        return jsonify({"message": "Tabela resetada com sucesso!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
