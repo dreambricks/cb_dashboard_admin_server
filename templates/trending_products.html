@@ -38,18 +38,37 @@
         }
 
         /* Estilos para o botão acima das tabelas */
-        #add-button {
-            margin-bottom: 20px;
-            align-self: start;
+
+        .container-items {
+            display: flex;
+            gap: 10px;
             grid-column: 1 / -1;
+            margin-bottom: 20px;
         }
+
     </style>
 </head>
 <body class="bg-gray-100">
 {% include 'header.html' %}
 
 <div id="tables-container">
-    <button id="add-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-56">Enviar para o Painel</button>
+    <div class="container-items">
+        <button id="add-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-56">Enviar para
+            o Painel
+        </button>
+
+        <label class="flex items-center mt-4">
+            <span class="mr-2">Editar Trending projects</span>
+            <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" id="toggle-trending-edited"
+                       class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
+                       {% if trending_products_edited %}checked{% endif %}>
+                <label for="toggle-trending-edited"
+                       class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+            </div>
+        </label>
+
+    </div>
 </div>
 
 <script>
@@ -137,6 +156,28 @@
             body: JSON.stringify(dataToSend)
         });
         alert("Tabelas enviadas com sucesso!");
+    });
+
+    document.getElementById('toggle-trending-edited').addEventListener('change', (event) => {
+        const isChecked = event.target.checked;
+        fetch('/toggle_trending_products_edited', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ trendingProductsEdited: isChecked })
+        })
+            .then(response => response.json())
+            .then(data => {
+            if (data.message) {
+                console.log('TRENDING_PRODUCTS_EDITED atualizado com sucesso!');
+            } else {
+                console.error('Erro ao atualizar TRENDING_PRODUCTS_EDITED: ' + data.error);
+            }
+        })
+            .catch(error => {
+            console.error('Erro ao enviar a solicitação:', error);
+        });
     });
 </script>
 </body>
