@@ -157,4 +157,4 @@ def get_trending_products():
 
     tsv_data = combined_df.to_csv(sep='\t', index=False)
 
-    return Response(tsv_data, mimetype='text/plain')
+    return Response(tsv_data, mimetype='text/plain; charset=utf-8')

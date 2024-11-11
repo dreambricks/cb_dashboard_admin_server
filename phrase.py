@@ -39,9 +39,10 @@ def phrase():
     saved_phrase = get_saved_phrase()
     return render_template('phrase.html', phrase=saved_phrase)
 
+
 @phrase_bp.route('/get-phrase')
 def get_phrase():
     phrase = config.PHRASE
-    response = Response(phrase, content_type='text/plain')
+    response = Response(phrase, content_type='text/plain; charset=utf-8')
 
     return response

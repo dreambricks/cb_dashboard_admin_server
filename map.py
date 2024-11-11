@@ -142,7 +142,7 @@ def get_first_tsv_file():
             with open(file_path, 'r', encoding='utf-8') as file:
                 content = file.read()
 
-            response = Response(content, content_type='text/plain')
+            response = Response(content, content_type='text/plain; charset=utf-8')
 
             return response
 
