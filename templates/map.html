@@ -9,15 +9,30 @@
 </head>
 <body class="bg-gray-100">
 {% include 'header.html' %}
+
 <div class="p-6 font-sans" style="font-family: 'Noto Sans', sans-serif;">
-    <div id="tsv-container" class="w-4/5 mx-auto mt-4" data-tsv-path="{{ tsv_file }}">
+    <div id="tsv-container" class="w-4/5 mx-auto mt-4">
+
+        <!-- Dropdown para selecionar o arquivo -->
+        <div class="mb-4">
+            <label for="file-selector" class="block text-gray-700 font-bold">Selecionar Tabela:</label>
+            <select id="file-selector" class="border rounded px-3 py-2">
+                <option value="{{ tsv_file }}">Tabela Original (não editável)</option>
+                <option value="{{ tsv_file_edited }}">Tabela Editável</option>
+            </select>
+        </div>
 
         <div class="flex space-x-4">
-            <button id="save-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Salvar
-                Tabela
+
+            <button id="save-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700" disabled>
+                Salvar Tabela
+            </button>
+
+            <button id="reset-button" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700">
+                Resetar Tabela
             </button>
             <label class="flex items-center mt-4">
-                <span class="mr-2">Editar Mapa</span>
+                <span class="mr-2">Mapa editado</span>
                 <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
                     <input type="checkbox" id="toggle-map-edited"
                            class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
@@ -41,44 +56,65 @@
         </table>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('tsv-container');
-        const tsvPath = container.dataset.tsvPath;
+        const fileSelector = document.getElementById('file-selector');
+        const saveButton = document.getElementById('save-button');
+        const tableBody = document.getElementById('table-body');
+        const resetButton = document.getElementById('reset-button');
 
-        // Função para buscar o arquivo TSV e carregar na tabela
-        fetch(tsvPath)
-            .then(response => response.text())
-            .then(data => {
-            const lines = data.split('\n');
-            const tableBody = document.getElementById('table-body');
+        function loadTable(tsvPath, isEditable) {
+            fetch(tsvPath)
+                .then(response => response.text())
+                .then(data => {
+                tableBody.innerHTML = ''; // Limpa o conteúdo existente
+                const lines = data.split('\n');
 
-            lines.forEach((line, index) => {
-                if (line.trim() !== '') {
-                    const [fixedColumn, editableColumn] = line.split('\t');
-                    const row = document.createElement('tr');
+                lines.forEach((line) => {
+                    if (line.trim() !== '') {
+                        const [fixedColumn, editableColumn] = line.split('\t');
+                        const row = document.createElement('tr');
 
-                    // Coluna fixa
-                    const fixedCell = document.createElement('td');
-                    fixedCell.textContent = fixedColumn;
-                    fixedCell.classList.add('border', 'px-4', 'py-2', 'bg-gray-200');
-                    row.appendChild(fixedCell);
+                        // Coluna fixa
+                        const fixedCell = document.createElement('td');
+                        fixedCell.textContent = fixedColumn;
+                        fixedCell.classList.add('border', 'px-4', 'py-2', 'bg-gray-200');
+                        row.appendChild(fixedCell);
 
-                    // Coluna editável
-                    const editableCell = document.createElement('td');
-                    editableCell.contentEditable = true;
-                    editableCell.textContent = editableColumn || '';
-                    editableCell.classList.add('border', 'px-4', 'py-2', 'bg-white');
-                    row.appendChild(editableCell);
+                        // Coluna editável ou não editável com base na seleção
+                        const editableCell = document.createElement('td');
+                        editableCell.textContent = editableColumn || '';
+                        editableCell.classList.add('border', 'px-4', 'py-2');
+                        if (isEditable) {
+                            editableCell.contentEditable = true;
+                            editableCell.classList.add('bg-white');
+                        } else {
+                            editableCell.contentEditable = false;
+                            editableCell.classList.add('bg-gray-100');
+                        }
+                        row.appendChild(editableCell);
 
-                    tableBody.appendChild(row);
-                }
-            });
-        })
-            .catch(error => console.error('Erro ao carregar o arquivo TSV:', error));
+                        tableBody.appendChild(row);
+                    }
+                });
+                saveButton.disabled = !isEditable; // Habilita/desabilita botão de salvar
+            })
+                .catch(error => console.error('Erro ao carregar o arquivo TSV:', error));
+        }
+
+        // Carrega a tabela com base na seleção inicial do dropdown
+        loadTable(fileSelector.value, fileSelector.value === "{{ tsv_file_edited }}");
+
+        // Atualiza a tabela e a funcionalidade de edição ao mudar o arquivo no dropdown
+        fileSelector.addEventListener('change', () => {
+            const selectedFile = fileSelector.value;
+            loadTable(selectedFile, selectedFile === "{{ tsv_file_edited }}");
+        });
 
         // Função para salvar a tabela
-        document.getElementById('save-button').addEventListener('click', () => {
+        saveButton.addEventListener('click', () => {
             const tableRows = document.querySelectorAll('#editable-table tbody tr');
             const tableData = [];
 
@@ -109,7 +145,7 @@
             });
         });
 
-
+        // Alternância para editar o mapa
         document.getElementById('toggle-map-edited').addEventListener('change', (event) => {
             const isChecked = event.target.checked;
             fetch('/toggle_map_edited', {
@@ -131,6 +167,31 @@
                 console.error('Erro ao enviar a solicitação:', error);
             });
         });
+
+        resetButton.addEventListener('click', () => {
+            fetch('/reset_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                if (data.message) {
+                    alert('Tabela resetada com sucesso!');
+                    if (fileSelector.value === "{{ tsv_file_edited }}") {
+                        loadTable(fileSelector.value, true);
+                    }
+                } else {
+                    alert('Erro ao resetar a tabela: ' + data.error);
+                }
+            })
+                .catch(error => {
+                console.error('Erro ao resetar a tabela:', error);
+                alert('Erro ao resetar a tabela.');
+            });
+        });
+
     });
 </script>
 </body>

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, current_app, redirect, ur
     abort, Response
 import os
 import config
+import shutil
 
 map_bp = Blueprint('map', __name__)
 
@@ -9,21 +10,32 @@ map_bp = Blueprint('map', __name__)
 @map_bp.route('/map')
 def index():
     folder_path = current_app.config['MAP_TSV_FOLDER_IN']
-    tsv_filename = None
+    folder_path_edited = current_app.config['MAP_TSV_FOLDER_EDITED']
 
-    for file in os.listdir(folder_path):
-        if file.endswith('.tsv'):
-            tsv_filename = file
-            break
+    def get_tsv_path(folder):
+        for file in os.listdir(folder):
+            if file.endswith('.tsv'):
+                return os.path.join(folder, file).replace("\\", "/")
+        return None
 
-    if tsv_filename is None:
-        return "No TSV file found in the directory.", 404
+    new_path = get_tsv_path(folder_path)
+    new_path_edited = get_tsv_path(folder_path_edited)
 
-    tsv_path = os.path.join(folder_path, tsv_filename)
-    new_path = tsv_path.replace("\\", "/")
-    print(new_path)
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    map_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('MAP_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                map_edited = value.lower() == 'true'
+                break
 
-    return render_template('map.html', tsv_file=new_path, map_edited=config.MAP_EDITED)
+    if map_edited is None:
+        return "MAP_EDITED not found in config.py", 500
+
+
+    print(new_path_edited)
+    return render_template('map.html', tsv_file=new_path, tsv_file_edited=new_path_edited, map_edited=map_edited)
 
 
 @map_bp.route('/save_table', methods=['POST'])
@@ -98,6 +110,7 @@ def download_file(filename):
 
     return send_from_directory(directory=folder_path, path=filename, as_attachment=True)
 
+
 @map_bp.route('/get-map-tsv', methods=['GET'])
 def get_first_tsv_file():
     if config.MAP_EDITED:
@@ -121,3 +134,22 @@ def get_first_tsv_file():
             return response
 
     abort(404, description="Nenhum arquivo .tsv encontrado na pasta.")
+
+
+@map_bp.route('/reset_table', methods=['POST'])
+def reset_table():
+    try:
+        source_folder = config.MAP_TSV_FOLDER_IN
+        target_file = os.path.join(config.MAP_TSV_FOLDER_EDITED, 'map_tsv_edited.tsv')
+
+        source_file = next((f for f in os.listdir(source_folder) if f.endswith('.tsv')), None)
+        if source_file is None:
+            return jsonify({"error": "Nenhum arquivo TSV encontrado na pasta de origem."}), 404
+
+        source_file_path = os.path.join(source_folder, source_file)
+
+        shutil.copy(source_file_path, target_file)
+
+        return jsonify({"message": "Tabela resetada com sucesso!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
