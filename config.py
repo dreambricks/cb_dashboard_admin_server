@@ -24,6 +24,6 @@ PRODUCT_EDITED = True
 
 TRENDING_PRODUCTS_FOLDER_IN = 'static/trending_products_folder_in'
 TRENDING_PRODUCTS_FOLDER_EDITED = 'static/trending_products_folder_edited'
-TRENDING_PRODUCTS_EDITED = True
+TRENDING_PRODUCTS_EDITED = False
 
 PHRASE = "O que a galera esta pedindo #blackaovivo"

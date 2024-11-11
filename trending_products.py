@@ -1,8 +1,8 @@
-from flask import Blueprint, request, render_template, current_app, jsonify, send_from_directory
+from flask import Blueprint, request, render_template, current_app, jsonify, send_from_directory, Response
 import os
 import config
 import shutil
-
+import pandas as pd
 
 trending_products_bp = Blueprint('trending_products', __name__)
 
@@ -27,7 +27,7 @@ def trending_products():
     if trending_products_edited is None:
         return "TRENDING_PRODUCTS_EDITED not found in config.py", 500
 
-    return render_template('trending_products.html', files=files,files_edited=files_edited,
+    return render_template('trending_products.html', files=files, files_edited=files_edited,
                            trending_products_edited=trending_products_edited)
 
 
@@ -115,3 +115,46 @@ def reset_trending_products_tables():
         return jsonify({"success": False, "error": str(e)})
 
 
+@trending_products_bp.route('/get-trending-products', methods=['GET'])
+def get_trending_products():
+
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    trending_products_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('TRENDING_PRODUCTS_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                trending_products_edited = value.lower() == 'true'
+                break
+
+    if trending_products_edited is None:
+        return "TRENDING_PRODUCTS_EDITED not found in config.py", 500
+
+    if trending_products_edited:
+        folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_EDITED']
+    else:
+        folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_IN']
+
+
+    tsv_files = [f for f in os.listdir(folder_path) if f.endswith('.tsv')]
+
+    if not tsv_files:
+        return Response("No .tsv files found in the specified folder", status=404, mimetype='text/plain')
+
+    combined_df = pd.DataFrame()
+
+    for idx, file_name in enumerate(tsv_files):
+        file_path = os.path.join(folder_path, file_name)
+
+        df = pd.read_csv(file_path, sep='\t')
+
+        df['categoria'] = os.path.splitext(file_name)[0]
+
+        if idx == 0:
+            combined_df = df
+        else:
+            combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    tsv_data = combined_df.to_csv(sep='\t', index=False)
+
+    return Response(tsv_data, mimetype='text/plain')
