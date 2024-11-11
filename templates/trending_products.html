@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Products</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+    <style>
+        /* Define o contêiner das tabelas com grid de duas colunas */
+        #tables-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            justify-content: center;
+            align-items: start;
+            padding: 20px;
+        }
+
+        /* Estilo para garantir que todas as tabelas tenham largura e altura fixas */
+        .fixed-table {
+            width: 600px;
+            table-layout: fixed;
+            overflow: hidden;
+        }
+
+        /* Define uma largura fixa para as colunas */
+        .fixed-table th, .fixed-table td {
+            width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Ajustes de estilo adicional para centralizar o título */
+        .table-title {
+            text-align: center;
+        }
+
+        /* Estilos para o botão acima das tabelas */
+        #add-button {
+            margin-bottom: 20px;
+            align-self: start;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+{% include 'header.html' %}
+
+<div id="tables-container">
+    <button id="add-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-56">Enviar para o Painel</button>
+</div>
+
+<script>
+    const files = {{ files | tojson }};
+
+    async function loadTSV(file) {
+        const response = await fetch(`/download-tsv/${file}`);
+        const text = await response.text();
+        return text;
+    }
+
+    function createTableFromTSV(content, title) {
+        const container = document.getElementById('tables-container');
+        const table = document.createElement('table');
+        table.className = 'min-w-full bg-white border rounded-lg shadow-md fixed-table';
+
+        const caption = document.createElement('caption');
+        caption.className = 'bg-gray-200 text-lg font-semibold p-3 border-b table-title';
+        caption.contentEditable = true;
+        caption.textContent = title;
+        table.appendChild(caption);
+
+        const rows = content.trim().split('\n');
+        const headers = rows[0].split('\t');
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'bg-gray-100 text-gray-700';
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.className = 'px-4 py-2 text-left font-semibold';
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        tbody.className = 'divide-y divide-gray-200';
+        rows.slice(1).forEach(row => {
+            const tr = document.createElement('tr');
+            const cells = row.split('\t');
+            cells.forEach(cell => {
+                const td = document.createElement('td');
+                td.className = 'px-4 py-2';
+                td.contentEditable = true;
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+    }
+
+    files.forEach(async file => {
+        const filename = file.replace('.tsv', '');
+        const content = await loadTSV(file);
+        createTableFromTSV(content, filename);
+    });
+
+    // Função para coletar dados das tabelas e enviar para o backend
+    document.getElementById('add-button').addEventListener('click', async () => {
+        const tables = document.querySelectorAll('.fixed-table');
+        const dataToSend = [];
+
+        tables.forEach(table => {
+            const title = table.querySelector('caption').textContent.trim();
+            const rows = [];
+            table.querySelectorAll('tr').forEach((row, rowIndex) => {
+                const cells = [];
+                row.querySelectorAll('th, td').forEach(cell => {
+                    cells.push(cell.textContent.trim());
+                });
+                rows.push(cells.join('\t'));
+            });
+            dataToSend.push({ filename: `${title}.tsv`, content: rows.join('\n') });
+        });
+
+        await fetch('/save_tables', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        });
+        alert("Tabelas enviadas com sucesso!");
+    });
+</script>
+</body>
+</html>

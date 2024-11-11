@@ -5,6 +5,7 @@ from map import map_bp
 from photo import photo_bp
 from phrase import phrase_bp
 from top_products import top_products_bp
+from trending_products import trending_products_bp
 from word_selection import word_selection_bp
 from social_selection import social_selection_bp
 
@@ -20,6 +21,7 @@ app.register_blueprint(social_selection_bp)
 app.register_blueprint(map_bp)
 app.register_blueprint(top_products_bp)
 app.register_blueprint(phrase_bp)
+app.register_blueprint(trending_products_bp)
 
 os.makedirs(app.config['PHOTO_FOLDER'], exist_ok=True)
 
@@ -42,6 +44,10 @@ os.makedirs(app.config['MAP_TSV_FOLDER_EDITED'], exist_ok=True)
 
 os.makedirs(app.config['TOP_PRODUCTS_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['TOP_PRODUCTS_FOLDER_EDITED'], exist_ok=True)
+
+os.makedirs(app.config['TRENDING_PRODUCTS_FOLDER_IN'], exist_ok=True)
+os.makedirs(app.config['TRENDING_PRODUCTS_FOLDER_EDITED'], exist_ok=True)
+
 
 @app.route('/alive')
 def alive():
