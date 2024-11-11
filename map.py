@@ -113,7 +113,20 @@ def download_file(filename):
 
 @map_bp.route('/get-map-tsv', methods=['GET'])
 def get_first_tsv_file():
-    if config.MAP_EDITED:
+
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    map_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('MAP_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                map_edited = value.lower() == 'true'
+                break
+
+    if map_edited is None:
+        return "MAP_EDITED not found in config.py", 500
+
+    if map_edited:
         folder_path = config.MAP_TSV_FOLDER_EDITED
     else:
         folder_path = config.MAP_TSV_FOLDER_IN

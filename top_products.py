@@ -120,7 +120,19 @@ def download_file(filename):
 @top_products_bp.route('/get-top-product-tsv', methods=['GET'])
 def get_first_tsv_file():
 
-    if config.PRODUCT_EDITED:
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    product_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('PRODUCT_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                product_edited = value.lower() == 'true'
+                break
+
+    if product_edited is None:
+        return "PRODUCT_EDITED not found in config.py", 500
+
+    if product_edited:
         folder_path = config.TOP_PRODUCTS_FOLDER_EDITED
     else:
         folder_path = config.TOP_PRODUCTS_FOLDER_IN
