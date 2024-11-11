@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
     <style>
-        /* Define o contêiner das tabelas com grid de duas colunas */
         #tables-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -17,14 +16,12 @@
             padding: 20px;
         }
 
-        /* Estilo para garantir que todas as tabelas tenham largura e altura fixas */
         .fixed-table {
             width: 600px;
             table-layout: fixed;
             overflow: hidden;
         }
 
-        /* Define uma largura fixa para as colunas */
         .fixed-table th, .fixed-table td {
             width: 150px;
             white-space: nowrap;
@@ -32,18 +29,17 @@
             text-overflow: ellipsis;
         }
 
-        /* Ajustes de estilo adicional para centralizar o título */
         .table-title {
             text-align: center;
         }
-
-        /* Estilos para o botão acima das tabelas */
 
         .container-items {
             display: flex;
             gap: 10px;
             grid-column: 1 / -1;
             margin-bottom: 20px;
+            align-items: center;
+            padding:20px;
         }
 
     </style>
@@ -51,43 +47,54 @@
 <body class="bg-gray-100">
 {% include 'header.html' %}
 
-<div id="tables-container">
-    <div class="container-items">
-        <button id="add-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-56">Enviar para
-            o Painel
-        </button>
 
-        <label class="flex items-center mt-4">
-            <span class="mr-2">Editar Trending projects</span>
-            <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                <input type="checkbox" id="toggle-trending-edited"
-                       class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
-                       {% if trending_products_edited %}checked{% endif %}>
-                <label for="toggle-trending-edited"
-                       class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-            </div>
-        </label>
+<div class="container-items">
+    <button id="add-button" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 w-56">
+        Enviar para o Painel
+    </button>
 
-    </div>
+    <button id="reset-button" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700 w-56">
+        Resetar Tabelas
+    </button>
+
+    <select id="table-group-select" class="mt-4 px-4 py-2 border rounded">
+        <option value="non-editable">Tabelas Não Editáveis</option>
+        <option value="editable">Tabelas Editáveis</option>
+    </select>
+
+    <label class="flex items-center mt-4">
+        <span class="mr-2">Editar Trending projects</span>
+        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+            <input type="checkbox" id="toggle-trending-edited"
+                   class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
+                   {% if trending_products_edited %}checked{% endif %}>
+            <label for="toggle-trending-edited"
+                   class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+        </div>
+    </label>
 </div>
+
+<div id="tables-container"></div>
 
 <script>
     const files = {{ files | tojson }};
+    const filesEdited = {{ files_edited | tojson }};
+    const container = document.getElementById('tables-container');
+    const selectElement = document.getElementById('table-group-select');
 
-    async function loadTSV(file) {
-        const response = await fetch(`/download-tsv/${file}`);
+    async function loadTSV(file, folder) {
+        const response = await fetch(`/download-tsv${folder}/${file}`);
         const text = await response.text();
         return text;
     }
 
-    function createTableFromTSV(content, title) {
-        const container = document.getElementById('tables-container');
+    function createTableFromTSV(content, title, editable) {
         const table = document.createElement('table');
         table.className = 'min-w-full bg-white border rounded-lg shadow-md fixed-table';
 
         const caption = document.createElement('caption');
         caption.className = 'bg-gray-200 text-lg font-semibold p-3 border-b table-title';
-        caption.contentEditable = true;
+        caption.contentEditable = editable;
         caption.textContent = title;
         table.appendChild(caption);
 
@@ -114,7 +121,9 @@
             cells.forEach(cell => {
                 const td = document.createElement('td');
                 td.className = 'px-4 py-2';
-                td.contentEditable = true;
+                if (editable) {
+                    td.contentEditable = true;
+                }
                 td.textContent = cell;
                 tr.appendChild(td);
             });
@@ -124,13 +133,24 @@
         container.appendChild(table);
     }
 
-    files.forEach(async file => {
-        const filename = file.replace('.tsv', '');
-        const content = await loadTSV(file);
-        createTableFromTSV(content, filename);
+    async function displayTables(fileList, editable, folder) {
+        container.innerHTML = '';
+        for (const file of fileList) {
+            const filename = file.replace('.tsv', '');
+            const content = await loadTSV(file, folder);
+            createTableFromTSV(content, filename, editable);
+        }
+    }
+
+    selectElement.addEventListener('change', () => {
+        const selectedGroup = selectElement.value;
+        if (selectedGroup === 'non-editable') {
+            displayTables(files, false, '');
+        } else {
+            displayTables(filesEdited, true, '-edited');
+        }
     });
 
-    // Função para coletar dados das tabelas e enviar para o backend
     document.getElementById('add-button').addEventListener('click', async () => {
         const tables = document.querySelectorAll('.fixed-table');
         const dataToSend = [];
@@ -148,7 +168,7 @@
             dataToSend.push({ filename: `${title}.tsv`, content: rows.join('\n') });
         });
 
-        await fetch('/save_tables', {
+        await fetch('/save_trending_products_tables', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -179,6 +199,28 @@
             console.error('Erro ao enviar a solicitação:', error);
         });
     });
+
+    document.getElementById('reset-button').addEventListener('click', async () => {
+        const confirmation = confirm("Tem certeza de que deseja resetar as tabelas? Esta ação não pode ser desfeita.");
+        if (confirmation) {
+            try {
+                const response = await fetch('/reset_trending_products_tables', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert("Tabelas resetadas com sucesso!");
+                    location.reload(); // Recarrega a página para atualizar as tabelas
+                } else {
+                    alert("Erro ao resetar tabelas: " + data.error);
+                }
+            } catch (error) {
+                console.error("Erro ao resetar tabelas:", error);
+                alert("Erro ao resetar tabelas.");
+            }
+        }
+    });
+
+
+    displayTables(files, false, '');
 </script>
 </body>
 </html>
