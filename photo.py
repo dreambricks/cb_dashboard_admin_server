@@ -4,11 +4,16 @@ import os
 
 photo_bp = Blueprint('photo', __name__)
 
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+
+
+def is_allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @photo_bp.route('/upload_photo', methods=['GET', 'POST'])
 def upload_image():
     if request.method == 'POST':
-
         if 'files' not in request.files:
             return "Nenhum arquivo encontrado."
 
@@ -17,16 +22,18 @@ def upload_image():
             return "Nenhum arquivo selecionado."
 
         for filename in os.listdir(current_app.config['PHOTO_FOLDER']):
-            if filename.endswith('_ACTIVE.jpg'):
+            if any(filename.endswith(f'_ACTIVE.{ext}') for ext in ALLOWED_EXTENSIONS):
                 disabled_filename = filename.replace('_ACTIVE', '_DISABLED')
                 os.rename(
                     os.path.join(current_app.config['PHOTO_FOLDER'], filename),
                     os.path.join(current_app.config['PHOTO_FOLDER'], disabled_filename)
                 )
 
+        # Salvar novas imagens
         for file in files:
-            if file.filename:
-                filename = f"{randint(0, 9999999)}_ACTIVE.jpg"
+            if file.filename and is_allowed_file(file.filename):
+                extension = file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{randint(0, 9999999)}_ACTIVE.{extension}"
                 file_path = os.path.join(current_app.config['PHOTO_FOLDER'], filename)
                 file.save(file_path)
 
@@ -34,7 +41,7 @@ def upload_image():
 
     active_images = [
         filename for filename in os.listdir(current_app.config['PHOTO_FOLDER'])
-        if filename.endswith('_ACTIVE.jpg')
+        if any(filename.endswith(f'_ACTIVE.{ext}') for ext in ALLOWED_EXTENSIONS)
     ]
 
     return render_template('photo.html', active_images=active_images)
@@ -47,7 +54,7 @@ def get_active_images():
     active_images = [
         url_for('static', filename=f'photos/{filename}', _external=True)
         for filename in os.listdir(upload_folder)
-        if filename.endswith('_ACTIVE.jpg')
+        if any(filename.endswith(f'_ACTIVE.{ext}') for ext in ALLOWED_EXTENSIONS)
     ]
 
     return jsonify(active_images=active_images), 200
