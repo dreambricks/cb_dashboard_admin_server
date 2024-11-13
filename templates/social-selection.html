@@ -175,16 +175,26 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50";
 
-                item.row.forEach(cell => {
+                item.row.forEach((cell, cellIndex) => {
                     const td = document.createElement("td");
                     td.className = "px-4 py-2";
                     td.textContent = cell;
+
+                    // Torna a célula editável
+                    td.contentEditable = "true";
+
+                    // Atualiza os dados na matriz quando a célula perde o foco
+                    td.addEventListener("input", () => {
+                        item.row[cellIndex] = td.textContent.trim(); // Atualiza o dado
+                    });
+
                     tr.appendChild(td);
                 });
 
                 selectedTableBody.appendChild(tr);
             });
         }
+
 
         document.getElementById("confirmButton").addEventListener("click", function() {
             const selectedRows = document.querySelectorAll("#selectedTableBody tr");
