@@ -1,15 +1,16 @@
 from flask import Blueprint, render_template, current_app, request, url_for, jsonify, send_from_directory, send_file
 import os
-import config
 from word_cloud import generate_wordcloud
 from datetime import datetime
 
 word_selection_bp = Blueprint('word_selection', __name__)
 
+
 @word_selection_bp.route('/download-word-tsv/<filename>')
 def download_word_tsv(filename):
     folder_path = current_app.config['WORD_TSV_FOLDER_OUT']
     return send_from_directory(folder_path, filename, as_attachment=True)
+
 
 @word_selection_bp.route('/word-selection')
 def index():
@@ -29,6 +30,7 @@ def index():
     print(new_path)
     return render_template('word-selection.html', tsv_path=new_path)
 
+
 @word_selection_bp.route('/save_tsv', methods=['POST'])
 def save_tsv():
     data = request.get_json()
@@ -42,11 +44,28 @@ def save_tsv():
         f.write(tsv_content)
 
     download_url = url_for('word_selection.download_word_tsv', filename=tsv_filename, _external=True)
+    generate_word_cloud()
+
     return jsonify({'download_url': download_url})
 
 
 @word_selection_bp.route('/word_cloud')
 def word_cloud():
+    folder_path = current_app.config['WORD_CLOUD_IMAGE']
+    img_path = None
+
+    for file in os.listdir(folder_path):
+        if file.endswith("_ACTIVE.png"):
+            img_path = os.path.join(folder_path, file)
+
+    if img_path is None:
+        return "No active PNG file found.", 404
+
+    return send_file(img_path, mimetype='image/png')
+
+
+@word_selection_bp.route('/generate_word_cloud')
+def generate_word_cloud():
     folder_path = current_app.config['WORD_TSV_FOLDER_OUT']
     tsv_filename = None
 
@@ -69,13 +88,11 @@ def word_cloud():
             os.rename(old_path, new_path)
 
     # Cria o nome do novo arquivo com timestamp e "_ACTIVE.png"
-    time_stamp = datetime.now().strftime("%Y%m%d%H%M")
+    time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"{time_stamp}_ACTIVE.png"
     img_path = os.path.join(folder_out, filename)
 
     # Gera e salva a nova imagem de nuvem de palavras
     generate_wordcloud(folder_in, img_path)
 
-    # Retorna o arquivo de imagem diretamente como resposta
     return send_file(img_path, mimetype='image/png')
-
