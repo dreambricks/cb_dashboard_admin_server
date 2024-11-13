@@ -31,15 +31,34 @@ def trending_products():
                            trending_products_edited=trending_products_edited)
 
 
-@trending_products_bp.route('/download-tsv/<filename>')
-def download_tsv(filename):
+@trending_products_bp.route('/load-tsv/<filename>')
+def load_tsv(filename):
     folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_IN']
     return send_from_directory(folder_path, filename)
 
-
-@trending_products_bp.route('/download-tsv-edited/<filename>')
-def download_tsv_edited(filename):
+@trending_products_bp.route('/load-tsv-edited/<filename>')
+def load_tsv_edited(filename):
     folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_EDITED']
+    return send_from_directory(folder_path, filename)
+
+@trending_products_bp.route('/download-trending-products-tsv/<filename>')
+def download_tsv_edited(filename):
+    config_path = os.path.join(current_app.root_path, 'config.py')
+    trending_products_edited = None
+    with open(config_path, 'r') as file:
+        for line in file:
+            if line.startswith('TRENDING_PRODUCTS_EDITED'):
+                value = line.split('=')[1].strip().strip('"').strip("'")
+                trending_products_edited = value.lower() == 'true'
+                break
+
+    if trending_products_edited is None:
+        return "TRENDING_PRODUCTS_EDITED not found in config.py", 500
+
+    if trending_products_edited:
+        folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_EDITED']
+    else:
+        folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_IN']
     return send_from_directory(folder_path, filename)
 
 
@@ -117,7 +136,6 @@ def reset_trending_products_tables():
 
 @trending_products_bp.route('/get-trending-products', methods=['GET'])
 def get_trending_products():
-
     config_path = os.path.join(current_app.root_path, 'config.py')
     trending_products_edited = None
     with open(config_path, 'r') as file:
@@ -134,7 +152,6 @@ def get_trending_products():
         folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_EDITED']
     else:
         folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_IN']
-
 
     tsv_files = [f for f in os.listdir(folder_path) if f.endswith('.tsv')]
 

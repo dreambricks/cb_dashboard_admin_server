@@ -83,7 +83,7 @@
     const selectElement = document.getElementById('table-group-select');
 
     async function loadTSV(file, folder) {
-        const response = await fetch(`/download-tsv${folder}/${file}`);
+        const response = await fetch(`/load-tsv${folder}/${file}`);
         const text = await response.text();
         return text;
     }
