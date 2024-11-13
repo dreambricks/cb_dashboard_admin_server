@@ -1,9 +1,12 @@
 URL_BASENAME = 'http://192.168.15.89:5000/'
 
 PHOTO_FOLDER = 'static/photos'
+
 WORD_TSV_FOLDER_IN = 'static/words_tsv_in'
-SOCIAL_TSV_FOLDER_IN = 'static/social_csv_in'
 WORD_TSV_FOLDER_OUT = 'static/words_tsv_out'
+WORD_CLOUD_IMAGE = 'static/word_cloud'
+
+SOCIAL_TSV_FOLDER_IN = 'static/social_csv_in'
 SOCIAL_TSV_FOLDER_OUT= 'static/social_csv_out'
 
 X_TSV_FOLDER_IN = 'static/social/x_tsv_in'

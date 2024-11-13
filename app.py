@@ -26,9 +26,10 @@ app.register_blueprint(trending_products_bp)
 os.makedirs(app.config['PHOTO_FOLDER'], exist_ok=True)
 
 os.makedirs(app.config['WORD_TSV_FOLDER_IN'], exist_ok=True)
-os.makedirs(app.config['SOCIAL_TSV_FOLDER_IN'], exist_ok=True)
-
 os.makedirs(app.config['WORD_TSV_FOLDER_OUT'], exist_ok=True)
+os.makedirs(app.config['WORD_CLOUD_IMAGE'], exist_ok=True)
+
+os.makedirs(app.config['SOCIAL_TSV_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['SOCIAL_TSV_FOLDER_OUT'], exist_ok=True)
 
 os.makedirs(app.config['X_TSV_FOLDER_IN'], exist_ok=True)

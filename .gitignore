@@ -156,32 +156,6 @@ cython_debug/
 
 .idea
 
-static/photos
-
-static/words_tsv_in
-
-static/words_tsv_out
-
-static/social_csv_in
-
-static/social_csv_out
-
-static/social
-
-static/map_tsv_in
-
-static/map_tsv_out
-
-static/map_tsv_edited
-
-static/top_products_tsv_in
-
-static/top_products_tsv_edited
-
-static/trending_products_folder_edited
-
-static/trending_products_folder_in
-
 
 produtos.csv
 
