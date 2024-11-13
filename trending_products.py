@@ -36,10 +36,12 @@ def load_tsv(filename):
     folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_IN']
     return send_from_directory(folder_path, filename)
 
+
 @trending_products_bp.route('/load-tsv-edited/<filename>')
 def load_tsv_edited(filename):
     folder_path = current_app.config['TRENDING_PRODUCTS_FOLDER_EDITED']
     return send_from_directory(folder_path, filename)
+
 
 @trending_products_bp.route('/download-trending-products-tsv/<filename>')
 def download_tsv_edited(filename):
