@@ -29,6 +29,21 @@
                 <button id="confirmButton"
                         class="mt-4 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Confirmar
                 </button>
+
+                <!-- Espaço para adicionar palavras e números -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-2">Adicionar Nova Palavra</h3>
+                    <form id="addWordForm" class="flex gap-4">
+                        <input type="text" id="newWord" placeholder="Palavra"
+                               class="border px-3 py-2 rounded w-full" required>
+                        <input type="number" id="newNumber" placeholder="Número"
+                               class="border px-3 py-2 rounded w-full" required>
+                        <button type="submit"
+                                class="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600">
+                            Adicionar
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <div>
@@ -49,16 +64,20 @@
     </div>
 
     <script>
+        // Lista para armazenar itens selecionados na tabela principal
+        let selectedRowsOrdered = [];
 
+        // Lista para armazenar palavras adicionadas manualmente
+        let manuallyAddedRows = [];
+
+        // Lida com o carregamento do TSV
         function loadTSV(tsvPath) {
-            console.log(tsvPath)
             fetch(tsvPath)
                 .then(response => response.text())
                 .then(text => {
                 const data = parseTSV(text);
                 displayTable(data);
 
-                // Limpa as tabelas secundárias
                 document.getElementById("selectedTableHeader").innerHTML = "";
                 document.getElementById("selectedTableBody").innerHTML = "";
                 document.getElementById("confirmedTableHeader").innerHTML = "";
@@ -69,13 +88,10 @@
                 .catch(error => console.error('Erro ao carregar o TSV:', error));
         }
 
-        // Executa a função para carregar o TSV ao iniciar a página
-        document.addEventListener("DOMContentLoaded", function() {
-            const tsvPath = "{{ tsv_path }}";  // Caminho do TSV passado pelo Flask
+        document.addEventListener("DOMContentLoaded", function () {
+            const tsvPath = "{{ tsv_path }}";
             if (tsvPath) {
-                loadTSV(tsvPath);  // Carrega o TSV automaticamente se o caminho estiver definido
-            } else {
-                console.error("Caminho do TSV não fornecido.");
+                loadTSV(tsvPath);
             }
         });
 
@@ -83,7 +99,7 @@
 
         function parseTSV(text) {
             const rows = text.split('\n').map(row => row.split('\t'));
-            originalTableData = rows.slice(1).map((row, index) => ({ index, row })); // Ignora o cabeçalho
+            originalTableData = rows.slice(1).map((row, index) => ({ index, row }));
             return rows;
         }
 
@@ -101,8 +117,8 @@
                     const checkbox = document.createElement("input");
                     checkbox.type = "checkbox";
                     checkbox.className = "rounded text-blue-500";
-                    checkbox.addEventListener("change", function() {
-                        handleCheckboxChange(checkbox, index - 1); // Usa o índice original
+                    checkbox.addEventListener("change", function () {
+                        handleCheckboxChange(checkbox, index - 1);
                     });
                     checkboxCell.appendChild(checkbox);
                     tr.appendChild(checkboxCell);
@@ -130,38 +146,12 @@
             });
         }
 
-        // Lista para armazenar itens selecionados, mantendo a ordem original
-        let selectedRowsOrdered = [];
-
-        function handleCheckboxChange(checkbox, rowIndex) {
-            if (checkbox.checked) {
-                addRowToSelectedTable(rowIndex);
-            } else {
-                removeRowFromSelectedTable(rowIndex);
-            }
-        }
-
-        function addRowToSelectedTable(rowIndex) {
-            const rowData = originalTableData[rowIndex].row;
-
-            // Adiciona o item à lista de selecionados e ordena pela posição original
-            selectedRowsOrdered.push({ index: rowIndex, row: rowData });
-            selectedRowsOrdered.sort((a, b) => a.index - b.index); // Ordena pela posição original
-
-            renderSelectedTable();
-        }
-
-        function removeRowFromSelectedTable(rowIndex) {
-            // Remove o item da lista de selecionados
-            selectedRowsOrdered = selectedRowsOrdered.filter(item => item.index !== rowIndex);
-
-            renderSelectedTable();
-        }
-
+        // Atualiza a tabela "Palavras Selecionadas", preservando as palavras adicionadas manualmente
         function renderSelectedTable() {
             const selectedTableBody = document.getElementById("selectedTableBody");
             selectedTableBody.innerHTML = "";
 
+            // Renderizar linhas selecionadas da tabela principal
             selectedRowsOrdered.forEach(item => {
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50";
@@ -175,9 +165,71 @@
 
                 selectedTableBody.appendChild(tr);
             });
+
+            // Renderizar palavras adicionadas manualmente
+            manuallyAddedRows.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+
+                item.forEach(cell => {
+                    const td = document.createElement("td");
+                    td.className = "px-4 py-2";
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+
+                selectedTableBody.appendChild(tr);
+            });
         }
 
-        document.getElementById("confirmButton").addEventListener("click", function() {
+        // Adiciona uma linha manualmente
+        document.getElementById("addWordForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const wordInput = document.getElementById("newWord");
+            const numberInput = document.getElementById("newNumber");
+
+            const word = wordInput.value.trim();
+            const number = numberInput.value.trim();
+
+            if (word && number) {
+                // Adiciona aos itens adicionados manualmente
+                manuallyAddedRows.push([word, number]);
+
+                // Atualiza a tabela "Palavras Selecionadas"
+                renderSelectedTable();
+
+                // Limpa os campos de entrada
+                wordInput.value = "";
+                numberInput.value = "";
+            }
+        });
+
+        // Lida com a seleção/deseleção de checkboxes
+        function handleCheckboxChange(checkbox, rowIndex) {
+            if (checkbox.checked) {
+                addRowToSelectedTable(rowIndex);
+            } else {
+                removeRowFromSelectedTable(rowIndex);
+            }
+        }
+
+        // Adiciona uma linha da tabela principal à tabela de palavras selecionadas
+        function addRowToSelectedTable(rowIndex) {
+            const rowData = originalTableData[rowIndex].row;
+            selectedRowsOrdered.push({ index: rowIndex, row: rowData });
+            selectedRowsOrdered.sort((a, b) => a.index - b.index);
+            renderSelectedTable();
+        }
+
+        // Remove uma linha da tabela principal da tabela de palavras selecionadas
+        function removeRowFromSelectedTable(rowIndex) {
+            selectedRowsOrdered = selectedRowsOrdered.filter(item => item.index !== rowIndex);
+            renderSelectedTable();
+        }
+
+        // Confirma as palavras selecionadas e exibe na tabela de palavras confirmadas
+        document.getElementById("confirmButton").addEventListener("click", function () {
             const selectedRows = document.querySelectorAll("#selectedTableBody tr");
             const confirmedTableBody = document.getElementById("confirmedTableBody");
             const confirmedTableHeader = document.getElementById("confirmedTableHeader");
@@ -210,7 +262,8 @@
             document.getElementById("downloadButton").style.display = "inline-block";
         });
 
-        document.getElementById("downloadButton").addEventListener("click", function() {
+        // Lógica para salvar o TSV confirmado
+        document.getElementById("downloadButton").addEventListener("click", function () {
             const rows = [];
             rows.push("palavras");
 
@@ -246,7 +299,7 @@
                 .catch(error => console.error('Erro ao enviar o TSV:', error));
         });
 
-        // Função para exibir uma modal
+        // Exibe uma modal com mensagem
         function showModal(message) {
             const modal = document.createElement("div");
             modal.className = "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50";
