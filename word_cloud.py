@@ -61,9 +61,8 @@ def generate_wordcloud(input_file_path, output_image_path):
     word_frequencies = read_tab_separated_file(input_file_path)
     alpha_colors = normalize_data(word_frequencies)
 
-    font_path = r"data\AkzidenzGroteskBQ-MdCnd.ttf"
+    font_path = r"data/AkzidenzGroteskBQ-MdCnd.ttf"
 
-    # Generate the word cloud with the custom color function
     gen_wordcloud = WordCloud(
         width=720, height=280, font_path=font_path,
         background_color="rgba(255, 255, 255, 0)", mode="RGBA",
