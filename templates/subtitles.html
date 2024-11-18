@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Legendas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+{% include 'header.html' %}
+<div class="p-6" style="font-family: 'Noto Sans', sans-serif;">
+
+    <div class="container mx-auto">
+        <h2 class="text-2xl font-bold mb-4">Gerenciador de Legendas</h2>
+        <button id="saveButton" class="mb-4 bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600">Salvar Alterações</button>
+
+        <table id="editableTable" class="min-w-full bg-white border rounded-lg shadow-md">
+            <thead>
+                <tr class="bg-gray-100 font-semibold"></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tsvPath = "/dynamic/legendas";
+
+            if (tsvPath) {
+                loadTSV(tsvPath);
+            } else {
+                console.error("Caminho do TSV não fornecido.");
+            }
+
+            document.getElementById("saveButton").addEventListener("click", function () {
+                const confirmSave = confirm("Você tem certeza de que deseja salvar as alterações?");
+                if (confirmSave) {
+                    saveTable();
+                }
+            });
+        });
+
+        function loadTSV(tsvPath) {
+            fetch(tsvPath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao carregar o TSV: ' + response.statusText);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    const data = parseTSV(text);
+                    renderEditableTable(data);
+                })
+                .catch(error => console.error('Erro ao carregar o TSV:', error));
+        }
+
+        function parseTSV(text) {
+            return text.split('\n').map(row => row.split('\t').map(cell => cell.trim()));
+        }
+
+        function renderEditableTable(data) {
+            const tableHead = document.querySelector("#editableTable thead tr");
+            const tableBody = document.querySelector("#editableTable tbody");
+
+            tableHead.innerHTML = ""; // Limpa o cabeçalho
+            tableBody.innerHTML = ""; // Limpa o corpo
+
+            // Adiciona os cabeçalhos fixos
+            const headers = ["PAINEL", "LEGENDA"];
+            headers.forEach(header => {
+                const th = document.createElement("th");
+                th.textContent = header;
+                th.className = "px-4 py-2";
+                tableHead.appendChild(th);
+            });
+
+            // Renderiza as linhas do corpo
+            data.forEach((row, rowIndex) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50";
+
+                row.forEach((cell, cellIndex) => {
+                    const td = document.createElement("td");
+                    td.className = "px-4 py-2";
+
+                    if (cellIndex === 0) {
+                        // Primeira coluna não é editável
+                        td.textContent = cell;
+                    } else {
+                        // Outras colunas são editáveis
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.value = cell;
+                        input.className = "w-full border rounded px-2 py-1";
+                        td.appendChild(input);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function saveTable() {
+            const table = document.querySelector("#editableTable tbody");
+            const rows = Array.from(table.querySelectorAll("tr"));
+
+            // Prepara os dados para salvar
+            const data = rows.map(row => {
+                return Array.from(row.querySelectorAll("td")).map((cell, cellIndex) => {
+                    const input = cell.querySelector("input");
+                    return input ? input.value : cell.textContent;
+                });
+            });
+
+            const tsvContent = data.map(row => row.join('\t')).join('\n');
+
+            // Envia os dados para o servidor
+            fetch('/save_subtitle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tsv: tsvContent })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || "Erro desconhecido ao salvar.");
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message) {
+                        alert("Alterações salvas com sucesso!");
+                    } else {
+                        alert("Erro desconhecido.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro ao salvar o TSV:", error);
+                    alert(`Erro: ${error.message}`);
+                });
+        }
+
+    </script>
+</div>
+</body>
+</html>

@@ -32,4 +32,4 @@ TRENDING_PRODUCTS_EDITED = True
 PHRASE = "O que a galera esta pedindo #blackaovivo"
 
 CATEGORIES_FOLDER = 'dynamic/categorias'
-SUBITITLES_FOLDER = 'dynamic/legendas'
+SUBTITLES_FOLDER = 'dynamic/legendas'

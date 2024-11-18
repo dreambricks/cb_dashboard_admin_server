@@ -4,6 +4,7 @@ import config
 from map import map_bp
 from photo import photo_bp
 from phrase import phrase_bp
+from subtitle import subtitle_bp
 from top_products import top_products_bp
 from trending_products import trending_products_bp
 from word_selection import word_selection_bp
@@ -22,6 +23,7 @@ app.register_blueprint(map_bp)
 app.register_blueprint(top_products_bp)
 app.register_blueprint(phrase_bp)
 app.register_blueprint(trending_products_bp)
+app.register_blueprint(subtitle_bp)
 
 os.makedirs(app.config['PHOTO_FOLDER'], exist_ok=True)
 
