@@ -113,12 +113,16 @@
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
+
+        const sortedRows = rows.slice(1)
+            .map(row => row.split('\t'))
+            .sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+
         const tbody = document.createElement('tbody');
         tbody.className = 'divide-y divide-gray-200';
-        rows.slice(1).forEach(row => {
+        sortedRows.forEach(row => {
             const tr = document.createElement('tr');
-            const cells = row.split('\t');
-            cells.forEach(cell => {
+            row.forEach((cell, cellIndex) => {
                 const td = document.createElement('td');
                 td.className = 'px-4 py-2';
                 if (editable) {
@@ -132,6 +136,7 @@
         table.appendChild(tbody);
         container.appendChild(table);
     }
+
 
     async function displayTables(fileList, editable, folder) {
         container.innerHTML = '';
