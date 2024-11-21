@@ -10,194 +10,142 @@
 <body class="bg-gray-100">
 {% include 'header.html' %}
 <div class="p-6 font-sans" style="font-family: 'Noto Sans', sans-serif;">
-    <div class="w-2/4 mx-auto mt-4">
-        <label for="tableSelect" class="mr-2">Selecionar Tabela:</label>
-
-        <select id="tableSelect" class="px-4 py-2 border rounded">
-            <option value="{{ tsv_path }}">Tabela Original</option>
-            <option value="{{ tsv_file_edited }}">Tabela Editável
-            </option>
-        </select>
-
-        <div class="mt-4 flex space-x-4 items-center">
-            <button id="confirmButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Salvar
-                Tabela
-            </button>
-            <button id="reset-button" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700">
-                Resetar Tabela
-            </button>
-            <label class="flex items-center">
-                <span class="mr-2">Top Produtos Editados</span>
-                <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" id="toggle-product-edited"
-                           class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 checked:border-green-400"
-                           {% if product_edited %}checked{% endif %}>
-                    <label for="toggle-product-edited"
-                           class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                </div>
-            </label>
+    <h1 class="text-xl font-bold mb-6 text-center">Produtos</h1>
+    <div class="flex space-x-8 justify-center">
+        <!-- Tabela Original -->
+        <div class="w-2/4">
+            <h2 class="text-lg font-bold text-center mb-2">Tabela de Produtos</h2>
+            <table id="tsvTable" class="w-full table-auto bg-white border rounded-lg shadow-md"></table>
         </div>
-
-        <table id="tsvTable" class="mt-4 w-full table-auto bg-white border rounded-lg shadow-md"></table>
-
-        <div id="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-            <div class="bg-white p-6 rounded shadow-md">
-                <p class="mb-4">Alterar top 3 produtos?</p>
-                <button id="modalConfirm"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">Sim
-                </button>
-                <button id="modalCancel" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                    Não
-                </button>
-            </div>
+        <!-- Tabela de Selecionados -->
+        <div class="w-2/4">
+            <h2 class="text-lg font-bold text-center mb-2">Itens Marcados</h2>
+            <table id="selectedItemsTable" class="w-full table-auto bg-white border rounded-lg shadow-md"></table>
+        </div>
+    </div>
+    <div class="flex justify-center mt-6">
+        <button id="confirmButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Salvar Tabela
+        </button>
+    </div>
+    <div id="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-6 rounded shadow-md">
+            <p class="mb-4">Alterar top 3 produtos?</p>
+            <button id="modalConfirm"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">Sim
+            </button>
+            <button id="modalCancel" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Não
+            </button>
         </div>
     </div>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const tableSelect = document.getElementById('tableSelect');
         const tsvTable = document.getElementById('tsvTable');
-        const resetButton = document.getElementById('reset-button');
+        const selectedItemsTable = document.getElementById('selectedItemsTable');
+        const confirmButton = document.getElementById('confirmButton');
+        const modal = document.getElementById('modal');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalCancel = document.getElementById('modalCancel');
 
+        const tsvPath = "{{ tsv_path }}";
 
-        function loadTable(tsvPath, editable = false) {
+        let selectedItems = [];
+
+        function updateSelectedTable() {
+            selectedItemsTable.innerHTML = '';
+            selectedItems.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                // Mostra apenas a primeira coluna
+                const cell = document.createElement('td');
+                cell.className = 'px-4 py-2 border border-gray-300';
+                cell.textContent = item[0]; // Exibe apenas a primeira coluna
+                row.appendChild(cell);
+
+                selectedItemsTable.appendChild(row);
+            });
+        }
+
+        function loadTable(tsvPath) {
             fetch(tsvPath)
                 .then(response => response.text())
                 .then(data => {
                 const lines = data.split('\n');
-                tsvTable.innerHTML = ''; // Clear existing table
-
-                lines.forEach((line, index) => {
+                tsvTable.innerHTML = ''; // Limpa a tabela existente
+                lines.forEach(line => {
                     const row = document.createElement('tr');
-                    row.className = index === 0 ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50';
-
+                    row.className = 'hover:bg-gray-50';
                     const cells = line.split('\t');
-                    cells.forEach(cell => {
-                        const cellElement = document.createElement(index === 0 ? 'th' : 'td');
-                        cellElement.className = 'px-4 py-2 border border-gray-300';
-                        cellElement.contentEditable = editable && index !== 0;
-                        cellElement.textContent = cell;
-                        row.appendChild(cellElement);
+
+                    // Adicionar checkbox para seleção
+                    const checkboxCell = document.createElement('td');
+                    checkboxCell.className = 'px-4 py-2 border border-gray-300';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'item-checkbox';
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            if (selectedItems.length < 3) {
+                                selectedItems.push(cells); // Mantém as duas colunas nos dados selecionados
+                            } else {
+                                checkbox.checked = false;
+                                alert('Você só pode selecionar no máximo 3 itens.');
+                            }
+                        } else {
+                            selectedItems = selectedItems.filter(item => item !== cells);
+                        }
+                        updateSelectedTable();
                     });
+                    checkboxCell.appendChild(checkbox);
+                    row.appendChild(checkboxCell);
+
+                    // Adicionar somente a primeira coluna para exibição
+                    const cellElement = document.createElement('td');
+                    cellElement.className = 'px-4 py-2 border border-gray-300';
+                    cellElement.textContent = cells[0]; // Mostra apenas o conteúdo da primeira coluna
+                    row.appendChild(cellElement);
+
                     tsvTable.appendChild(row);
                 });
             })
                 .catch(err => console.error('Erro ao carregar o TSV:', err));
         }
 
-        // Load the default selected table
-        loadTable(tableSelect.value, tableSelect.selectedIndex === 1);
-
-        tableSelect.addEventListener('change', () => {
-            const editable = tableSelect.selectedIndex === 1;
-            loadTable(tableSelect.value, editable);
-        });
-
-        const confirmButton = document.getElementById('confirmButton');
-        const modal = document.getElementById('modal');
-        const modalConfirm = document.getElementById('modalConfirm');
-        const modalCancel = document.getElementById('modalCancel');
+        loadTable(tsvPath); // Carrega o TSV ao iniciar a página
 
         confirmButton.addEventListener('click', () => {
-            if (tableSelect.selectedIndex === 1) {
-                modal.classList.remove('hidden');
-            } else {
-                alert("Tabela original não pode ser editada.");
-            }
+            modal.classList.remove('hidden');
         });
 
-        if (modalCancel && modalConfirm) {
-            modalCancel.addEventListener('click', () => {
-                modal.classList.add('hidden');
-            });
+        modalCancel.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
 
-            modalConfirm.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                let tsvContent = '';
+        modalConfirm.addEventListener('click', () => {
+            modal.classList.add('hidden');
 
-                // Recolhe o conteúdo da tabela, linha por linha
-                Array.from(tsvTable.rows).forEach((row, rowIndex) => {
-                    let rowContent = [];
-                    Array.from(row.cells).forEach(cell => {
-                        rowContent.push(cell.textContent.trim());
-                    });
+            // Remove qualquer linha vazia ou inválida ao processar os dados
+            let tsvContent = selectedItems
+                .filter(item => item && Array.isArray(item) && item.some(cell => cell.trim() !== "")) // Filtra apenas itens válidos
+                .map(item => item.map(cell => cell.trim()).join('\t')) // Remove espaços extras e junta colunas com '\t'
+                .join('\n'); // Junta as linhas com '\n'
 
-                    // Adiciona a linha ao conteúdo, mas apenas adiciona `\n` se não for a última linha
-                    tsvContent += rowContent.join('\t');
-                    if (rowIndex < tsvTable.rows.length - 1) {
-                        tsvContent += '\n';
-                    }
-                });
-
-                // Envia o conteúdo para o backend para salvar
-                fetch('/save-edited-top-products', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ data: tsvContent })
-                })
-                    .then(response => {
-                    if (response.ok) {
-                        alert('Tabela salva com sucesso!');
-                    } else {
-                        alert('Erro ao salvar a tabela.');
-                    }
-                })
-                    .catch(err => console.error('Erro ao salvar o TSV:', err));
-            });
-        }
-
-        const toggleCheckbox = document.getElementById('toggle-product-edited');
-        if (toggleCheckbox) {
-            toggleCheckbox.addEventListener('change', (event) => {
-                const isChecked = event.target.checked;
-                fetch('/toggle_product_edited', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ productEdited: isChecked })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                    if (data.message) {
-                        console.log('PRODUCT_EDITED atualizado com sucesso!');
-                    } else {
-                        console.error('Erro ao atualizar PRODUCT_EDITED: ' + data.error);
-                    }
-                })
-                    .catch(error => {
-                    console.error('Erro ao enviar a solicitação:', error);
-                });
-            });
-        } else {
-            console.error("Elemento de checkbox não encontrado.");
-        }
-
-        resetButton.addEventListener('click', () => {
-            fetch('/reset_top_products_table', {
+            fetch('/save-edited-top-products', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: tsvContent })
             })
-                .then(response => response.json())
-                .then(data => {
-                if (data.message) {
-                    alert('Tabela resetada com sucesso!');
-                    if (tableSelect.value === "{{ tsv_file_edited }}") {
-                        loadTable(tableSelect.value, true);
-                    }
-                } else {
-                    alert('Erro ao resetar a tabela: ' + data.error);
-                }
+                .then(response => {
+                if (response.ok) alert('Tabela salva com sucesso!');
+                else alert('Erro ao salvar a tabela.');
             })
-                .catch(error => {
-                console.error('Erro ao resetar a tabela:', error);
-                alert('Erro ao resetar a tabela.');
-            });
+                .catch(err => console.error('Erro ao salvar o TSV:', err));
         });
+
+
+
     });
 </script>
 </body>

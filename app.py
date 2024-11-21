@@ -46,7 +46,7 @@ os.makedirs(app.config['MAP_TSV_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['MAP_TSV_FOLDER_EDITED'], exist_ok=True)
 
 os.makedirs(app.config['TOP_PRODUCTS_FOLDER_IN'], exist_ok=True)
-os.makedirs(app.config['TOP_PRODUCTS_FOLDER_EDITED'], exist_ok=True)
+os.makedirs(app.config['TOP_REQUESTS'], exist_ok=True)
 
 os.makedirs(app.config['TRENDING_PRODUCTS_FOLDER_IN'], exist_ok=True)
 os.makedirs(app.config['TRENDING_PRODUCTS_FOLDER_EDITED'], exist_ok=True)
@@ -84,4 +84,4 @@ def get_first_tsv_file(config_path):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)

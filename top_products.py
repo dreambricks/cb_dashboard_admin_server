@@ -10,7 +10,7 @@ top_products_bp = Blueprint('top_products', __name__)
 @top_products_bp.route('/top-products')
 def index():
     folder_path = current_app.config['TOP_PRODUCTS_FOLDER_IN']
-    folder_path_edited = current_app.config.get('TOP_PRODUCTS_FOLDER_EDITED')
+    folder_path_edited = current_app.config.get('TOP_REQUESTS')
 
     def get_tsv_path(folder):
         for file in os.listdir(folder):
@@ -52,7 +52,7 @@ def index():
 def save_edited_products():
     data = request.json.get('data')
     if data:
-        output_path = os.path.join(current_app.config['TOP_PRODUCTS_FOLDER_EDITED'], 'top_product_edited.tsv')
+        output_path = os.path.join(current_app.config['TOP_REQUESTS'], 'top_product_edited.tsv')
         try:
             with open(output_path, 'w', encoding='utf-8') as file:
                 file.write(data)
@@ -109,7 +109,7 @@ def download_map_link():
 @top_products_bp.route('/download_top_products/<filename>')
 def download_file(filename):
     if config.PRODUCT_EDITED:
-        folder_path = config.TOP_PRODUCTS_FOLDER_EDITED
+        folder_path = config.TOP_REQUESTS
     else:
         folder_path = config.TOP_PRODUCTS_FOLDER_IN
     print(folder_path)
@@ -133,7 +133,7 @@ def get_first_tsv_file():
         return "PRODUCT_EDITED not found in config.py", 500
 
     if product_edited:
-        folder_path = config.TOP_PRODUCTS_FOLDER_EDITED
+        folder_path = config.TOP_REQUESTS
     else:
         folder_path = config.TOP_PRODUCTS_FOLDER_IN
 
@@ -159,7 +159,7 @@ def get_first_tsv_file():
 def reset_table():
     try:
         source_folder = config.TOP_PRODUCTS_FOLDER_IN
-        target_file = os.path.join(config.TOP_PRODUCTS_FOLDER_EDITED, 'top_product_edited.tsv')
+        target_file = os.path.join(config.TOP_REQUESTS, 'top_product_edited.tsv')
 
         source_file = next((f for f in os.listdir(source_folder) if f.endswith('.tsv')), None)
         if source_file is None:
